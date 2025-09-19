@@ -1,6 +1,6 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState, useFormStatus } from 'react';
 import { login } from '@/lib/actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +20,7 @@ function LoginButton() {
 }
 
 export default function LoginForm() {
-  const [state, dispatch] = useFormState(login, undefined);
+  const [state, dispatch] = useActionState(login, undefined);
 
   return (
     <form action={dispatch}>

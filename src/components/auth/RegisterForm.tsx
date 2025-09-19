@@ -1,6 +1,6 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState, useFormStatus } from 'react';
 import { register } from '@/lib/actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +20,7 @@ function RegisterButton() {
 }
 
 export default function RegisterForm() {
-  const [state, dispatch] = useFormState(register, undefined);
+  const [state, dispatch] = useActionState(register, undefined);
 
   return (
     <form action={dispatch}>
