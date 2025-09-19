@@ -120,6 +120,10 @@ export async function getUserById(id: string): Promise<User | undefined> {
   return Promise.resolve(users.find(u => u.id === id));
 }
 
+export async function getUserByName(name: string): Promise<User | undefined> {
+    return Promise.resolve(users.find(u => u.name.toLowerCase() === name.toLowerCase()));
+}
+
 export async function getUserByEmail(email: string): Promise<User | undefined> {
   return Promise.resolve(users.find(u => u.email === email));
 }
@@ -152,12 +156,22 @@ export async function addUser(user: Omit<User, 'id' | 'avatarUrl' | 'role'>): Pr
   const newUser: User = {
     ...user,
     id: (users.length + 2).toString(),
+    email: user.email || `${user.name.toLowerCase().replace(/\s/g, '')}@example.com`,
     avatarUrl: `https://picsum.photos/seed/people${users.length + 2}/200/200`,
     role: 'PLAYER',
   };
   users.push(newUser);
   return Promise.resolve(newUser);
 }
+
+export async function findOrCreateUserByName(name: string): Promise<User> {
+    let user = await getUserByName(name);
+    if (!user) {
+        user = await addUser({ name, email: '' }); // email is auto-generated
+    }
+    return user;
+}
+
 
 export async function addMatch(match: MatchToCreate): Promise<Match> {
   const newMatch: Match = {

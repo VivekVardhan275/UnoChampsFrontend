@@ -1,8 +1,7 @@
 import MatchEntryForm from "@/components/admin/MatchEntryForm";
-import { getChampionships, getUsers } from "@/lib/data";
+import { getChampionships } from "@/lib/data";
 
 export default async function LogMatchPage() {
-    const users = await getUsers();
     const championships = await getChampionships();
     
     return (
@@ -11,7 +10,7 @@ export default async function LogMatchPage() {
                 <h1 className="text-3xl font-bold">Log New Match Result</h1>
                 <p className="text-muted-foreground">Select the season, date, and participants for the new match.</p>
             </div>
-            <MatchEntryForm allUsers={users} allChampionships={championships} />
+            <MatchEntryForm allChampionships={championships} />
         </div>
     )
 }

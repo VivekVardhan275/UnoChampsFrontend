@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
-import { getUserByEmail, addUser, addMatch, addChampionship, deleteChampionship as deleteChampionshipFromDb, updateChampionship as updateChampionshipInDb, getChampionships, deleteMatch as deleteMatchFromDb } from './data';
+import { getUserByEmail, addUser, addMatch, addChampionship, deleteChampionship as deleteChampionshipFromDb, updateChampionship as updateChampionshipInDb, getChampionships, deleteMatch as deleteMatchFromDb, findOrCreateUserByName } from './data';
 import { sessionCookieName } from './auth';
 import type { MatchParticipant, User } from './definitions';
 
@@ -113,7 +113,7 @@ const matchSchema = z.object({
     championshipId: z.string().min(1, 'Season is required.'),
     date: z.date({ required_error: 'A date for the match is required.' }),
     participants: z.array(z.object({
-        userId: z.string().min(1, "Player is required."),
+        name: z.string().min(1, "Player name is required."),
         rank: z.coerce.number().min(1, "Rank is required"),
         points: z.coerce.number().min(0, "Points must be 0 or more"),
     })).min(2, 'At least two players must be selected.')
@@ -124,8 +124,8 @@ const matchSchema = z.object({
     message: 'Each player must have a unique rank.',
     path: ['participants'],
 }).refine(data => {
-    const userIds = data.participants.map(p => p.userId);
-    return new Set(userIds).size === userIds.length;
+    const names = data.participants.map(p => p.name.toLowerCase().trim());
+    return new Set(names).size === names.length;
 }, {
     message: 'Each player can only be added once.',
     path: ['participants'],
@@ -139,10 +139,21 @@ export async function logMatch(data: z.infer<typeof matchSchema>) {
     }
     
     try {
+        const participantPromises = validatedData.data.participants.map(async (p) => {
+            const user = await findOrCreateUserByName(p.name);
+            return {
+                userId: user.id,
+                rank: p.rank,
+                points: p.points,
+            };
+        });
+
+        const participantsWithUserIds = await Promise.all(participantPromises);
+
         await addMatch({
             championshipId: validatedData.data.championshipId,
             date: validatedData.data.date.toISOString(),
-            participants: validatedData.data.participants.map(({ userId, rank, points }) => ({ userId, rank, points })),
+            participants: participantsWithUserIds,
         });
     } catch(error) {
         throw new Error('Database Error: Failed to log match.');

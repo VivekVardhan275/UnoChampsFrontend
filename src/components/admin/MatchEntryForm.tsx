@@ -16,12 +16,12 @@ import { logMatch } from "@/lib/actions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { User as UserType } from "@/lib/definitions";
 
 const ParticipantSchema = z.object({
-  userId: z.string().min(1, "Player is required."),
+  name: z.string().min(1, "Player name is required."),
   rank: z.coerce.number().min(1, "Rank is required"),
 });
 
@@ -37,8 +37,8 @@ const FormSchema = z.object({
     message: 'Each player must have a unique rank.',
     path: ['participants'],
 }).refine(data => {
-    const userIds = data.participants.map(p => p.userId);
-    return new Set(userIds).size === userIds.length;
+    const names = data.participants.map(p => p.name.toLowerCase().trim());
+    return new Set(names).size === names.length;
 }, {
     message: 'Each player can only be added once.',
     path: ['participants'],
@@ -48,7 +48,7 @@ const FormSchema = z.object({
 type FormValues = z.infer<typeof FormSchema>;
 type ParticipantWithPoints = z.infer<typeof ParticipantSchema> & { points: number };
 
-export default function MatchEntryForm({ allUsers, allChampionships }: { allUsers: User[], allChampionships: Championship[] }) {
+export default function MatchEntryForm({ allChampionships }: { allChampionships: Championship[] }) {
   const [step, setStep] = useState<'entry' | 'preview'>('entry');
   const [previewData, setPreviewData] = useState<{ formValues: FormValues; calculatedParticipants: ParticipantWithPoints[] } | null>(null);
 
@@ -66,9 +66,6 @@ export default function MatchEntryForm({ allUsers, allChampionships }: { allUser
     control: form.control,
     name: "participants",
   });
-
-  const userMap = new Map(allUsers.map(u => [u.id, u]));
-  const selectedUserIds = new Set(fields.map(field => field.userId));
 
   const handlePreview = (data: FormValues) => {
     const totalPlayers = data.participants.length;
@@ -88,8 +85,8 @@ export default function MatchEntryForm({ allUsers, allChampionships }: { allUser
     
     const dataToSubmit = {
         ...formValues,
-        participants: calculatedParticipants.map(({ userId, rank, points }) => ({
-            userId,
+        participants: calculatedParticipants.map(({ name, rank, points }) => ({
+            name,
             rank,
             points
         }))
@@ -144,16 +141,14 @@ export default function MatchEntryForm({ allUsers, allChampionships }: { allUser
                         <span className="font-bold text-lg">{formValues.multiplier}x</span>
                     </div>
                      {calculatedParticipants.map(p => {
-                        const user = userMap.get(p.userId);
                         return (
-                            <div key={p.userId} className="flex items-center justify-between p-2 rounded-md border">
+                            <div key={p.name} className="flex items-center justify-between p-2 rounded-md border">
                                 <div className="flex items-center gap-3">
                                     <div className="w-5 h-5 flex items-center justify-center font-bold text-muted-foreground">{p.rank}</div>
                                     <Avatar className="h-8 w-8">
-                                        <AvatarImage src={user?.avatarUrl} />
-                                        <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
+                                        <AvatarFallback>{p.name.charAt(0)}</AvatarFallback>
                                     </Avatar>
-                                    <span className="font-medium">{user?.name}</span>
+                                    <span className="font-medium">{p.name}</span>
                                 </div>
                                 <div className="font-semibold text-primary">{p.points.toLocaleString()} pts</div>
                             </div>
@@ -270,68 +265,20 @@ export default function MatchEntryForm({ allUsers, allChampionships }: { allUser
                 <div className="space-y-4">
                     {fields.length > 0 && (
                          <div className="grid grid-cols-[1fr_80px_auto] gap-4 items-center font-semibold text-muted-foreground px-2">
-                            <FormLabel>Player</FormLabel>
+                            <FormLabel>Player Name</FormLabel>
                             <FormLabel>Rank</FormLabel>
                          </div>
                     )}
                     {fields.map((field, index) => (
                         <div key={field.id} className="grid grid-cols-[1fr_80px_auto] gap-4 items-start">
-                            <FormField
+                             <FormField
                                 control={form.control}
-                                name={`participants.${index}.userId`}
+                                name={`participants.${index}.name`}
                                 render={({ field }) => (
                                     <FormItem>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <FormControl>
-                                                <Button
-                                                    variant="outline"
-                                                    role="combobox"
-                                                    className={cn(
-                                                    "w-full justify-between",
-                                                    !field.value && "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    {field.value
-                                                    ? allUsers.find(
-                                                        (user) => user.id === field.value
-                                                      )?.name
-                                                    : "Select player"}
-                                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                                </Button>
-                                                </FormControl>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                                <Command>
-                                                    <CommandInput placeholder="Search player..." />
-                                                    <CommandList>
-                                                        <CommandEmpty>No player found.</CommandEmpty>
-                                                        <CommandGroup>
-                                                            {allUsers.map((user) => (
-                                                            <CommandItem
-                                                                value={user.name}
-                                                                key={user.id}
-                                                                disabled={selectedUserIds.has(user.id)}
-                                                                onSelect={() => {
-                                                                    form.setValue(`participants.${index}.userId`, user.id);
-                                                                }}
-                                                            >
-                                                                <Check
-                                                                className={cn(
-                                                                    "mr-2 h-4 w-4",
-                                                                    user.id === field.value
-                                                                    ? "opacity-100"
-                                                                    : "opacity-0"
-                                                                )}
-                                                                />
-                                                                {user.name}
-                                                            </CommandItem>
-                                                            ))}
-                                                        </CommandGroup>
-                                                    </CommandList>
-                                                </Command>
-                                            </PopoverContent>
-                                        </Popover>
+                                        <FormControl>
+                                            <Input {...field} placeholder="Enter player name" />
+                                        </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -355,7 +302,7 @@ export default function MatchEntryForm({ allUsers, allChampionships }: { allUser
                         type="button" 
                         variant="outline" 
                         className="w-full"
-                        onClick={() => append({ userId: '', rank: fields.length + 1 })}
+                        onClick={() => append({ name: '', rank: fields.length + 1 })}
                     >
                        <UserPlus className="mr-2 h-4 w-4" /> Add Player
                     </Button>
