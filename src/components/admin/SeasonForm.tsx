@@ -47,7 +47,7 @@ export default function SeasonForm({ season }: { season?: Championship }) {
                 <Input
                     id="name"
                     name="name"
-                    placeholder="e.g., Spring Championship 2025"
+                    placeholder=""
                     required
                     defaultValue={season?.name}
                 />
