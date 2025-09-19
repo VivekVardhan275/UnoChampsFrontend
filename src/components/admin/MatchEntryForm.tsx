@@ -4,29 +4,32 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
 import * as z from "zod";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, User, Championship } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { User, Championship } from "@/lib/definitions";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "../ui/card";
-import { Trash2, ListPlus, UserPlus, Check, ChevronsUpDown } from "lucide-react";
+import { Trash2, ListPlus, UserPlus, Check, ChevronsUpDown, Eye, Wand2, ArrowLeft } from "lucide-react";
 import { logMatch } from "@/lib/actions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+
+const ParticipantSchema = z.object({
+  userId: z.string().min(1, "Player is required."),
+  rank: z.coerce.number().min(1, "Rank is required"),
+});
 
 const FormSchema = z.object({
   championshipId: z.string().min(1, 'Season is required.'),
   date: z.date({ required_error: 'A date for the match is required.' }),
-  participants: z.array(z.object({
-    userId: z.string().min(1, "Player is required."),
-    rank: z.coerce.number().min(1, "Rank is required"),
-    points: z.coerce.number().min(0, "Points must be 0 or more"),
-  })).min(2, 'At least two players must be selected.')
+  multiplier: z.coerce.number().min(1, "Multiplier must be at least 1."),
+  participants: z.array(ParticipantSchema).min(2, 'At least two players must be selected.')
 }).refine(data => {
     const ranks = data.participants.map(p => p.rank);
     return new Set(ranks).size === ranks.length;
@@ -43,14 +46,19 @@ const FormSchema = z.object({
 
 
 type FormValues = z.infer<typeof FormSchema>;
+type ParticipantWithPoints = z.infer<typeof ParticipantSchema> & { points: number };
 
 export default function MatchEntryForm({ allUsers, allChampionships }: { allUsers: User[], allChampionships: Championship[] }) {
+  const [step, setStep] = useState<'entry' | 'preview'>('entry');
+  const [previewData, setPreviewData] = useState<{ formValues: FormValues; calculatedParticipants: ParticipantWithPoints[] } | null>(null);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       championshipId: allChampionships[0]?.id || '',
       date: new Date(),
       participants: [],
+      multiplier: 10,
     },
   });
 
@@ -59,11 +67,36 @@ export default function MatchEntryForm({ allUsers, allChampionships }: { allUser
     name: "participants",
   });
 
+  const userMap = new Map(allUsers.map(u => [u.id, u]));
   const selectedUserIds = new Set(fields.map(field => field.userId));
 
-  async function onSubmit(data: FormValues) {
+  const handlePreview = (data: FormValues) => {
+    const totalPlayers = data.participants.length;
+    const calculatedParticipants = data.participants.map(p => ({
+        ...p,
+        points: (totalPlayers - p.rank) * data.multiplier
+    })).sort((a, b) => a.rank - b.rank);
+
+    setPreviewData({ formValues: data, calculatedParticipants });
+    setStep('preview');
+  };
+
+  async function onSubmit() {
+    if (!previewData) return;
+
+    const { formValues, calculatedParticipants } = previewData;
+    
+    const dataToSubmit = {
+        ...formValues,
+        participants: calculatedParticipants.map(({ userId, rank, points }) => ({
+            userId,
+            rank,
+            points
+        }))
+    }
+
     try {
-        await logMatch(data);
+        await logMatch(dataToSubmit);
         toast({
           title: "Match logged successfully!",
           description: "The standings have been updated and you have been redirected to the season's game list.",
@@ -71,8 +104,11 @@ export default function MatchEntryForm({ allUsers, allChampionships }: { allUser
         form.reset({
             championshipId: allChampionships[0]?.id || '',
             date: new Date(),
-            participants: []
+            participants: [],
+            multiplier: 10,
         });
+        setStep('entry');
+        setPreviewData(null);
     } catch(error) {
         toast({
             variant: "destructive",
@@ -82,16 +118,71 @@ export default function MatchEntryForm({ allUsers, allChampionships }: { allUser
     }
   }
 
+  if (step === 'preview' && previewData) {
+    const { formValues, calculatedParticipants } = previewData;
+    const championship = allChampionships.find(c => c.id === formValues.championshipId);
+
+    return (
+        <div className="space-y-6 max-w-2xl mx-auto">
+            <div className="flex items-center gap-4">
+                <Button variant="outline" size="icon" onClick={() => setStep('entry')}><ArrowLeft /></Button>
+                <div>
+                    <h2 className="text-2xl font-bold">Review Match Details</h2>
+                    <p className="text-muted-foreground">Confirm the results below before logging the match.</p>
+                </div>
+            </div>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Game Preview</CardTitle>
+                    <CardDescription>
+                        Playing in <strong>{championship?.name}</strong> on <strong>{format(formValues.date, "PPP")}</strong>
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    <div className="flex justify-between items-center bg-muted/50 p-3 rounded-md">
+                        <span className="font-semibold text-muted-foreground">Point Multiplier</span>
+                        <span className="font-bold text-lg">{formValues.multiplier}x</span>
+                    </div>
+                     {calculatedParticipants.map(p => {
+                        const user = userMap.get(p.userId);
+                        return (
+                            <div key={p.userId} className="flex items-center justify-between p-2 rounded-md border">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-5 h-5 flex items-center justify-center font-bold text-muted-foreground">{p.rank}</div>
+                                    <Avatar className="h-8 w-8">
+                                        <AvatarImage src={user?.avatarUrl} />
+                                        <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <span className="font-medium">{user?.name}</span>
+                                </div>
+                                <div className="font-semibold text-primary">{p.points.toLocaleString()} pts</div>
+                            </div>
+                        )
+                    })}
+                </CardContent>
+                <CardFooter className="flex justify-between items-center">
+                    <Button variant="ghost" onClick={() => setStep('entry')}>
+                        <ArrowLeft className="mr-2" /> Back to Edit
+                    </Button>
+                    <Button onClick={onSubmit} disabled={form.formState.isSubmitting}>
+                         {form.formState.isSubmitting ? "Logging..." : <><ListPlus className="mr-2 h-4 w-4" /> Log Match</> }
+                    </Button>
+                </CardFooter>
+            </Card>
+        </div>
+    )
+  }
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-4xl mx-auto">
+      <form onSubmit={form.handleSubmit(handlePreview)} className="space-y-6 max-w-4xl mx-auto">
         <Card>
             <CardHeader>
                 <CardTitle>1. Match Details</CardTitle>
-                <CardDescription>Choose the season this match belongs to and the date it was played.</CardDescription>
+                <CardDescription>Choose the season, date, and point multiplier for this match.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <FormField
                         control={form.control}
                         name="championshipId"
@@ -155,26 +246,36 @@ export default function MatchEntryForm({ allUsers, allChampionships }: { allUser
                             </FormItem>
                         )}
                     />
+                     <FormField
+                        control={form.control}
+                        name="multiplier"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Point Multiplier</FormLabel>
+                                <FormControl><Input {...field} type="number" placeholder="e.g. 10" /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 </div>
             </CardContent>
         </Card>
 
         <Card>
             <CardHeader>
-                <CardTitle>2. Participants & Results</CardTitle>
-                <CardDescription>Add players who participated and enter their final rank and points.</CardDescription>
+                <CardTitle>2. Participants & Ranks</CardTitle>
+                <CardDescription>Add players who participated and enter their final rank. Points will be calculated automatically.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
                     {fields.length > 0 && (
-                         <div className="grid grid-cols-[1fr_80px_80px_auto] gap-4 items-center font-semibold text-muted-foreground px-2">
+                         <div className="grid grid-cols-[1fr_80px_auto] gap-4 items-center font-semibold text-muted-foreground px-2">
                             <FormLabel>Player</FormLabel>
                             <FormLabel>Rank</FormLabel>
-                            <FormLabel>Points</FormLabel>
                          </div>
                     )}
                     {fields.map((field, index) => (
-                        <div key={field.id} className="grid grid-cols-[1fr_80px_80px_auto] gap-4 items-start">
+                        <div key={field.id} className="grid grid-cols-[1fr_80px_auto] gap-4 items-start">
                             <FormField
                                 control={form.control}
                                 name={`participants.${index}.userId`}
@@ -245,16 +346,6 @@ export default function MatchEntryForm({ allUsers, allChampionships }: { allUser
                                     </FormItem>
                                 )}
                             />
-                            <FormField
-                                control={form.control}
-                                name={`participants.${index}.points`}
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormControl><Input {...field} type="number" placeholder="Points" /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
                             <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
                                 <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
@@ -264,7 +355,7 @@ export default function MatchEntryForm({ allUsers, allChampionships }: { allUser
                         type="button" 
                         variant="outline" 
                         className="w-full"
-                        onClick={() => append({ userId: '', rank: fields.length + 1, points: 0 })}
+                        onClick={() => append({ userId: '', rank: fields.length + 1 })}
                     >
                        <UserPlus className="mr-2 h-4 w-4" /> Add Player
                     </Button>
@@ -278,8 +369,8 @@ export default function MatchEntryForm({ allUsers, allChampionships }: { allUser
             </CardContent>
             <CardFooter className="flex justify-between">
                 <p className="text-sm text-muted-foreground">{fields.length} player{fields.length === 1 ? '' : 's'} in this match.</p>
-                <Button type="submit" disabled={fields.length < 2 || form.formState.isSubmitting}>
-                    {form.formState.isSubmitting ? "Logging..." : <><ListPlus className="mr-2 h-4 w-4" /> Log Match</> }
+                <Button type="submit">
+                    <Eye className="mr-2 h-4 w-4" /> Preview & Calculate Points
                 </Button>
             </CardFooter>
         </Card>
