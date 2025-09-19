@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Standing } from '@/lib/definitions';
 import {
@@ -46,7 +46,12 @@ export default function StandingsTable({ initialStandings }: { initialStandings:
   const [sortConfig, setSortConfig] = useState<{
     key: SortKey;
     direction: 'ascending' | 'descending';
-  } | null>({ key: 'rank', direction: 'descending' });
+  } | null>(null);
+
+  useEffect(() => {
+    // Reset sort when initialStandings change
+    setSortConfig(null);
+  }, [initialStandings]);
 
   const requestSort = (key: SortKey) => {
     let direction: 'ascending' | 'descending' = 'ascending';
@@ -95,13 +100,17 @@ export default function StandingsTable({ initialStandings }: { initialStandings:
     return sortableItems;
   }, [initialStandings, sortConfig]);
 
+  if (sortedStandings.length === 0) {
+    return <p className="text-muted-foreground text-center">No standings to display for this selection.</p>
+  }
+
   return (
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
             <SortableHeader sortKey="rank" sortConfig={sortConfig} requestSort={requestSort}>Rank</SortableHeader>
-            <SortableHeader sortKey="name" sortConfig={sortConfig} requestSort={requestSort}>Player</SortableHeader>
+            <TableHead>Player</TableHead>
             <SortableHeader sortKey="totalPoints" sortConfig={sortConfig} requestSort={requestSort}>Total Points</SortableHeader>
             <SortableHeader sortKey="gamesPlayed" sortConfig={sortConfig} requestSort={requestSort}>Games</SortableHeader>
             <SortableHeader sortKey="first" sortConfig={sortConfig} requestSort={requestSort}>1st</SortableHeader>
