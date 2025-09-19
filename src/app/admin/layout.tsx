@@ -22,7 +22,7 @@ export default async function AdminLayout({
                 <Shield className="h-5 w-5"/>
                 Admin Panel
             </h2>
-            <nav className="grid grid-cols-2 sm:flex sm:flex-row gap-2">
+            <nav className="grid grid-cols-2 sm:flex sm:flex-row sm:justify-center gap-2">
                 <Button variant="ghost" className="justify-start" asChild>
                     <Link href="/admin">
                         <Home className="mr-2 h-4 w-4" />
