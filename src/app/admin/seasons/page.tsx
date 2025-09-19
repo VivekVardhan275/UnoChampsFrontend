@@ -13,7 +13,7 @@ export default async function SeasonsPage() {
                 <p className="text-muted-foreground">Create, edit, and manage championship seasons.</p>
             </div>
             <div className="flex flex-col gap-8">
-                <Card>
+                <Card className="max-w-lg">
                     <CardHeader>
                         <CardTitle>Create New Season</CardTitle>
                         <CardDescription>Add a new season to the championship.</CardDescription>
