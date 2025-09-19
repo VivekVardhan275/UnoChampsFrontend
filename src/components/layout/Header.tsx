@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { logout } from '@/lib/actions';
-import { LayoutGrid, BookOpen, Shield, User as UserIcon, LogOut, LogIn, UserPlus } from 'lucide-react';
+import { LayoutGrid, Shield, User as UserIcon, LogOut, LogIn, UserPlus } from 'lucide-react';
 
 const Logo = () => (
   <Link href="/" className="flex items-center gap-2 text-xl font-bold">
@@ -96,10 +96,10 @@ export default async function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center justify-between">
-        <div>
+        <div className="flex-1 flex justify-start">
           <Logo />
         </div>
-        <nav className="flex items-center gap-4 lg:gap-6 text-sm">
+        <nav className="flex-1 flex justify-center items-center gap-4 lg:gap-6 text-sm">
           <Link
             href="/"
             className="transition-colors hover:text-foreground/80 text-foreground/60 flex items-center gap-1"
@@ -107,15 +107,8 @@ export default async function Header() {
             <LayoutGrid className="h-4 w-4" />
             Standings
           </Link>
-          <Link
-            href="/rules"
-            className="transition-colors hover:text-foreground/80 text-foreground/60 flex items-center gap-1"
-          >
-            <BookOpen className="h-4 w-4" />
-            Rules
-          </Link>
         </nav>
-        <div className="flex items-center justify-end">
+        <div className="flex-1 flex items-center justify-end">
           <UserNav user={user} />
         </div>
       </div>
