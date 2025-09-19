@@ -6,16 +6,18 @@ import * as z from "zod";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { User } from "@/lib/definitions";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../ui/card";
+import { User, Championship } from "@/lib/definitions";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "../ui/card";
 import { Checkbox } from "../ui/checkbox";
 import { Trash2, ListPlus } from "lucide-react";
 import { logMatch } from "@/lib/actions";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 const FormSchema = z.object({
+  championshipId: z.string().min(1, 'Season is required.'),
   participants: z.array(z.object({
     userId: z.string(),
     name: z.string(),
@@ -32,10 +34,11 @@ const FormSchema = z.object({
 
 type FormValues = z.infer<typeof FormSchema>;
 
-export default function MatchEntryForm({ allUsers }: { allUsers: User[] }) {
+export default function MatchEntryForm({ allUsers, allChampionships }: { allUsers: User[], allChampionships: Championship[] }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
+      championshipId: allChampionships[0]?.id || '',
       participants: [],
     },
   });
@@ -60,12 +63,15 @@ export default function MatchEntryForm({ allUsers }: { allUsers: User[] }) {
 
   async function onSubmit(data: FormValues) {
     try {
-        await logMatch({ participants: data.participants.map(({userId, rank, points}) => ({userId, rank, points})) });
+        await logMatch(data);
         toast({
           title: "Match logged successfully!",
           description: "The standings have been updated.",
         });
-        form.reset();
+        form.reset({
+            championshipId: allChampionships[0]?.id || '',
+            participants: []
+        });
     } catch(error) {
         toast({
             variant: "destructive",
@@ -78,10 +84,39 @@ export default function MatchEntryForm({ allUsers }: { allUsers: User[] }) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+            <CardHeader>
+                <CardTitle>1. Select Season</CardTitle>
+                <CardDescription>Choose which season this match belongs to.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <FormField
+                    control={form.control}
+                    name="championshipId"
+                    render={({ field }) => (
+                        <FormItem>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a season" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {allChampionships.map(c => (
+                                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </CardContent>
+        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
             <Card>
                 <CardHeader>
-                    <CardTitle>1. Select Players</CardTitle>
+                    <CardTitle>2. Select Players</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                     {allUsers.map((user) => (
@@ -107,7 +142,7 @@ export default function MatchEntryForm({ allUsers }: { allUsers: User[] }) {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>2. Enter Ranks & Points</CardTitle>
+                    <CardTitle>3. Enter Ranks & Points</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
@@ -137,15 +172,15 @@ export default function MatchEntryForm({ allUsers }: { allUsers: User[] }) {
                                 </Button>
                             </div>
                         ))}
+                         {fields.length === 0 && <p className="text-center text-muted-foreground pt-4">Select players to start entering results.</p>}
                     </div>
                      {form.formState.errors.participants?.root && (
                         <p className="mt-4 text-sm font-medium text-destructive">{form.formState.errors.participants.root.message}</p>
                     )}
                 </CardContent>
                 <CardFooter>
-                    <Button type="submit" disabled={fields.length < 2}>
-                        <ListPlus className="mr-2 h-4 w-4" />
-                        Log Match
+                    <Button type="submit" disabled={fields.length < 2 || form.formState.isSubmitting}>
+                        {form.formState.isSubmitting ? "Logging..." : <><ListPlus className="mr-2 h-4 w-4" /> Log Match</> }
                     </Button>
                 </CardFooter>
             </Card>

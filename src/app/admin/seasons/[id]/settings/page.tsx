@@ -17,12 +17,12 @@ export default async function EditSeasonPage({ params }: { params: { id: string 
         <div className="space-y-6 max-w-lg mx-auto">
             <div className="flex items-center gap-4">
                  <Button variant="outline" size="icon" asChild>
-                    <Link href="/admin/seasons">
+                    <Link href={`/admin/seasons/${params.id}`}>
                         <ArrowLeft />
                     </Link>
                 </Button>
                 <div>
-                    <h1 className="text-3xl font-bold">Edit Season</h1>
+                    <h1 className="text-3xl font-bold">Season Settings</h1>
                     <p className="text-muted-foreground">Update the details for the season: {season.name}</p>
                 </div>
             </div>

@@ -10,9 +10,9 @@ export default async function SeasonsPage() {
         <div className="space-y-8">
              <div>
                 <h1 className="text-3xl font-bold">Season Management</h1>
-                <p className="text-muted-foreground">Create, edit, and delete championship seasons.</p>
+                <p className="text-muted-foreground">Create, edit, and manage championship seasons.</p>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                 <div className="lg:col-span-1">
                     <Card>
                         <CardHeader>

@@ -132,8 +132,13 @@ export async function getMatchesByUserId(userId: string): Promise<Match[]> {
   return Promise.resolve(matches.filter(m => m.participants.some(p => p.userId === userId)));
 }
 
+export async function getMatchesByChampionshipId(championshipId: string): Promise<Match[]> {
+    return Promise.resolve(matches.filter(m => m.championshipId === championshipId));
+}
+
 export async function getChampionships(): Promise<Championship[]> {
-  return Promise.resolve(championships);
+  // sort by name descending
+  return Promise.resolve(championships.sort((a,b) => b.name.localeCompare(a.name)));
 }
 
 export async function getChampionshipById(id: string): Promise<Championship | undefined> {

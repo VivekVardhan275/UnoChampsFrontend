@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
-import { getUserByEmail, addUser, addMatch, addChampionship, deleteChampionship as deleteChampionshipFromDb, updateChampionship as updateChampionshipInDb } from './data';
+import { getUserByEmail, addUser, addMatch, addChampionship, deleteChampionship as deleteChampionshipFromDb, updateChampionship as updateChampionshipInDb, getChampionships } from './data';
 import { sessionCookieName } from './auth';
 import type { MatchParticipant, User } from './definitions';
 
@@ -109,16 +109,33 @@ export async function register(prevState: any, formData: FormData) {
   redirect('/');
 }
 
-export async function logMatch(data: { participants: MatchParticipant[] }) {
-    if(!data.participants || data.participants.length < 2) {
-        throw new Error('A match must have at least 2 participants.');
+const matchSchema = z.object({
+    championshipId: z.string().min(1, 'Season is required.'),
+    participants: z.array(z.object({
+        userId: z.string(),
+        rank: z.coerce.number().min(1, "Rank is required"),
+        points: z.coerce.number().min(0, "Points must be 0 or more"),
+    })).min(2, 'At least two players must be selected.')
+}).refine(data => {
+    const ranks = data.participants.map(p => p.rank);
+    return new Set(ranks).size === ranks.length;
+}, {
+    message: 'Each player must have a unique rank.',
+    path: ['participants'],
+});
+
+
+export async function logMatch(data: z.infer<typeof matchSchema>) {
+    const validatedData = matchSchema.safeParse(data);
+    if (!validatedData.success) {
+        throw new Error(validatedData.error.flatten().fieldErrors.participants?.[0] || 'Invalid match data.');
     }
     
     try {
         await addMatch({
-            championshipId: 'championship1', // Assuming a single championship for now
+            championshipId: validatedData.data.championshipId,
             date: new Date().toISOString(),
-            participants: data.participants,
+            participants: validatedData.data.participants,
         });
     } catch(error) {
         throw new Error('Database Error: Failed to log match.');
@@ -172,7 +189,9 @@ export async function updateSeason(id: string, prevState: any, formData: FormDat
         return { message: `Database Error: ${(error as Error).message}` };
     }
     revalidatePath('/admin/seasons');
-    redirect('/admin/seasons');
+    revalidatePath(`/admin/seasons/${id}`);
+    revalidatePath(`/admin/seasons/${id}/settings`);
+    redirect(`/admin/seasons/${id}`);
 }
 
 export async function deleteSeason(id: string) {
