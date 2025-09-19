@@ -15,6 +15,7 @@ import { Checkbox } from "../ui/checkbox";
 import { Trash2, ListPlus } from "lucide-react";
 import { logMatch } from "@/lib/actions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Label } from "../ui/label";
 
 const FormSchema = z.object({
   championshipId: z.string().min(1, 'Season is required.'),
