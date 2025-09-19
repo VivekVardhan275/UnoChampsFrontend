@@ -143,7 +143,7 @@ export default function RulesGenerator() {
               <AlertTitle>Disclaimer</AlertTitle>
               <AlertDescription>
                 AI-generated content may be inaccurate or unsafe. Always review and vet the rules before publishing.
-              </AlertDescription>
+              </AI-generated-content>
             </Alert>
           <Textarea
             readOnly

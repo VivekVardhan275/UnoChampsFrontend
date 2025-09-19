@@ -2,7 +2,7 @@ import { getUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Home, ListPlus, Shield } from 'lucide-react';
+import { Home, ListPlus, Shield, Wand2 } from 'lucide-react';
 
 export default async function AdminLayout({
   children,
@@ -33,6 +33,12 @@ export default async function AdminLayout({
                     <Link href="/admin/log-match">
                         <ListPlus className="mr-2 h-4 w-4" />
                         Log Match Result
+                    </Link>
+                </Button>
+                 <Button variant="ghost" className="justify-start" asChild>
+                    <Link href="/admin/rules-generator">
+                        <Wand2 className="mr-2 h-4 w-4" />
+                        AI Rules Generator
                     </Link>
                 </Button>
             </nav>
