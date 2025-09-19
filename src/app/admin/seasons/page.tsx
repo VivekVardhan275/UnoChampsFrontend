@@ -22,7 +22,7 @@ export default async function SeasonsPage() {
                         <SeasonForm />
                     </CardContent>
                 </Card>
-                 <Card>
+                 <Card className="max-w-lg mx-auto w-full">
                     <CardHeader>
                         <CardTitle>Existing Seasons</CardTitle>
                          <CardDescription>View and manage all current and past seasons.</CardDescription>
