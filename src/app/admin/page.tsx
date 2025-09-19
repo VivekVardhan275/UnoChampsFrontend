@@ -7,17 +7,11 @@ export default async function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="text-center">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <Button asChild>
-          <Link href="/admin/log-match">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Log New Match
-          </Link>
-        </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><SlidersHorizontal /> Season Management</CardTitle>
@@ -26,6 +20,17 @@ export default async function AdminDashboard() {
             <CardDescription>Create, edit, and delete championship seasons. Set start and end dates, and manage which games belong to which season.</CardDescription>
             <Button asChild className="mt-4">
               <Link href="/admin/seasons">Manage Seasons</Link>
+            </Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><PlusCircle /> Log Match Result</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription>Enter the results from a recently played game to update the league standings and player statistics.</CardDescription>
+            <Button asChild className="mt-4">
+              <Link href="/admin/log-match">Log New Match</Link>
             </Button>
           </CardContent>
         </Card>
