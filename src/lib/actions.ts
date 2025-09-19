@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache';
 
 import { getUserByEmail, addUser, addMatch } from './data';
 import { sessionCookieName } from './auth';
-import type { MatchParticipant } from './definitions';
+import type { MatchParticipant, User } from './definitions';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -19,6 +19,8 @@ export async function login(prevState: any, formData: FormData) {
     Object.fromEntries(formData.entries())
   );
 
+  let user: User | undefined;
+
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
@@ -29,7 +31,7 @@ export async function login(prevState: any, formData: FormData) {
   const { email, password } = validatedFields.data;
 
   try {
-    const user = await getUserByEmail(email);
+    user = await getUserByEmail(email);
 
     if (!user || user.password !== password) {
       return { message: 'Invalid email or password.' };
@@ -48,7 +50,12 @@ export async function login(prevState: any, formData: FormData) {
   }
 
   revalidatePath('/');
-  redirect('/');
+  
+  if (user?.role === 'ADMIN') {
+    redirect('/admin');
+  } else {
+    redirect('/');
+  }
 }
 
 export async function logout() {
