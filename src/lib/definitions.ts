@@ -17,6 +17,7 @@ export type MatchToCreate = Omit<Match, 'id'>;
 
 export type Match = {
   id: string;
+  name: string;
   championshipId: string;
   date: string; // ISO 8601 format
   participants: MatchParticipant[];

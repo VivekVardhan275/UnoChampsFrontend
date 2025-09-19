@@ -42,11 +42,11 @@ export default function MatchList({ matches, users, seasonId }: { matches: Match
     
     return (
         <div className="space-y-6">
-        {matches.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((match, index) => (
+        {matches.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((match) => (
             <Card key={match.id}>
                 <CardHeader className="flex flex-row justify-between items-center">
                     <div>
-                        <h3 className="font-semibold text-lg">Game #{matches.length - index}</h3>
+                        <h3 className="font-semibold text-lg">{match.name}</h3>
                         <p className="text-sm text-muted-foreground">{format(new Date(match.date), 'MMMM d, yyyy')}</p>
                     </div>
                      <div className="flex items-center gap-2">

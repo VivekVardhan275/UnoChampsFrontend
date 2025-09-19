@@ -13,6 +13,7 @@ import { Trophy } from 'lucide-react';
 import StandingsTable from '@/components/standings/StandingsTable';
 import type { Championship, Match, User } from '@/lib/definitions';
 import { calculateStandings } from '@/lib/utils';
+import { format } from 'date-fns';
 
 export default function StandingsSelector({
   championships,
@@ -29,7 +30,8 @@ export default function StandingsSelector({
   const [selectedMatch, setSelectedMatch] = useState<string>('all'); // 'all' for season standings
 
   const filteredMatches = useMemo(() => {
-    return matches.filter((match) => match.championshipId === selectedChampionship);
+    return matches.filter((match) => match.championshipId === selectedChampionship)
+      .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [matches, selectedChampionship]);
 
   const standings = useMemo(() => {
@@ -51,6 +53,9 @@ export default function StandingsSelector({
     setSelectedChampionship(championshipId);
     setSelectedMatch('all');
   };
+  
+  const selectedMatchObject = filteredMatches.find(m => m.id === selectedMatch);
+
 
   return (
     <div className="space-y-6">
@@ -81,9 +86,9 @@ export default function StandingsSelector({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Games (Season Standings)</SelectItem>
-            {filteredMatches.map((match, index) => (
+            {filteredMatches.map((match) => (
               <SelectItem key={match.id} value={match.id}>
-                Game #{index + 1} - {new Date(match.date).toLocaleDateString()}
+                {match.name} - {format(new Date(match.date), 'MMM d, yyyy')}
               </SelectItem>
             ))}
           </SelectContent>
@@ -95,7 +100,7 @@ export default function StandingsSelector({
             <Trophy className="text-accent" />
             {selectedMatch === 'all'
               ? 'Current Season Leaderboard'
-              : `Game #${filteredMatches.findIndex(m => m.id === selectedMatch) + 1} Results`}
+              : selectedMatchObject?.name ? `${selectedMatchObject.name} Results` : 'Game Results'}
           </CardTitle>
         </CardHeader>
         <CardContent>

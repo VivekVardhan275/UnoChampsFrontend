@@ -17,6 +17,7 @@ let matches: Match[] = [
   // Summer Season 2024 Matches
   {
     id: 'match1',
+    name: 'Game #1',
     championshipId: 'championship1',
     date: '2024-07-20T19:00:00Z',
     participants: [
@@ -28,6 +29,7 @@ let matches: Match[] = [
   },
   {
     id: 'match2',
+    name: 'Game #2',
     championshipId: 'championship1',
     date: '2024-07-21T19:00:00Z',
     participants: [
@@ -39,6 +41,7 @@ let matches: Match[] = [
   },
   {
     id: 'match3',
+    name: 'Game #3',
     championshipId: 'championship1',
     date: '2024-07-22T19:00:00Z',
     participants: [
@@ -50,6 +53,7 @@ let matches: Match[] = [
   },
   {
     id: 'match4',
+    name: 'Game #4',
     championshipId: 'championship1',
     date: '2024-07-23T19:00:00Z',
     participants: [
@@ -61,6 +65,7 @@ let matches: Match[] = [
   },
   {
     id: 'match5',
+    name: 'Game #5',
     championshipId: 'championship1',
     date: '2024-07-24T19:00:00Z',
     participants: [
@@ -74,6 +79,7 @@ let matches: Match[] = [
   // Winter Season 2024 Matches
   {
     id: 'match6',
+    name: 'Game #1',
     championshipId: 'championship2',
     date: '2024-12-10T19:00:00Z',
     participants: [
@@ -84,6 +90,7 @@ let matches: Match[] = [
   },
   {
     id: 'match7',
+    name: 'Game #2',
     championshipId: 'championship2',
     date: '2024-12-11T19:00:00Z',
     participants: [
@@ -96,6 +103,7 @@ let matches: Match[] = [
    // Autumn Invitational 2023 Matches
   {
     id: 'match8',
+    name: 'Game #1',
     championshipId: 'championship3',
     date: '2023-10-05T19:00:00Z',
     participants: [

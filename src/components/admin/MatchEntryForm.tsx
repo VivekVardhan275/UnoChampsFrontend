@@ -27,6 +27,7 @@ const ParticipantSchema = z.object({
 
 const FormSchema = z.object({
   championshipId: z.string().min(1, 'Season is required.'),
+  name: z.string().min(1, 'Game name is required.'),
   date: z.date({ required_error: 'A date for the match is required.' }),
   multiplier: z.coerce.number().min(1, "Multiplier must be at least 1."),
   participants: z.array(ParticipantSchema).min(2, 'At least two players must be selected.')
@@ -56,6 +57,7 @@ export default function MatchEntryForm({ allChampionships }: { allChampionships:
     resolver: zodResolver(FormSchema),
     defaultValues: {
       championshipId: allChampionships[0]?.id || '',
+      name: '',
       date: new Date(),
       participants: [],
       multiplier: 10,
@@ -100,6 +102,7 @@ export default function MatchEntryForm({ allChampionships }: { allChampionships:
         });
         form.reset({
             championshipId: allChampionships[0]?.id || '',
+            name: '',
             date: new Date(),
             participants: [],
             multiplier: 10,
@@ -130,7 +133,7 @@ export default function MatchEntryForm({ allChampionships }: { allChampionships:
             </div>
             <Card>
                 <CardHeader>
-                    <CardTitle>Game Preview</CardTitle>
+                    <CardTitle>{formValues.name}</CardTitle>
                     <CardDescription>
                         Playing in <strong>{championship?.name}</strong> on <strong>{format(formValues.date, "PPP")}</strong>
                     </CardDescription>
@@ -200,6 +203,17 @@ export default function MatchEntryForm({ allChampionships }: { allChampionships:
                             </FormItem>
                         )}
                     />
+                    <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Game Name</FormLabel>
+                                <FormControl><Input {...field} placeholder="e.g. Game #1" /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                      <FormField
                         control={form.control}
                         name="date"
@@ -212,7 +226,7 @@ export default function MatchEntryForm({ allChampionships }: { allChampionships:
                                     <Button
                                     variant={"outline"}
                                     className={cn(
-                                        "pl-3 text-left font-normal",
+                                        "w-full justify-start pl-3 text-left font-normal",
                                         !field.value && "text-muted-foreground"
                                     )}
                                     >

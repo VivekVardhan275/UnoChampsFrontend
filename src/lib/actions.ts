@@ -111,6 +111,7 @@ export async function register(prevState: any, formData: FormData) {
 
 const matchSchema = z.object({
     championshipId: z.string().min(1, 'Season is required.'),
+    name: z.string().min(1, 'Game name is required.'),
     date: z.date({ required_error: 'A date for the match is required.' }),
     participants: z.array(z.object({
         name: z.string().min(1, "Player name is required."),
@@ -152,6 +153,7 @@ export async function logMatch(data: z.infer<typeof matchSchema>) {
 
         await addMatch({
             championshipId: validatedData.data.championshipId,
+            name: validatedData.data.name,
             date: validatedData.data.date.toISOString(),
             participants: participantsWithUserIds,
         });
