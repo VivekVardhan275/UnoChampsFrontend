@@ -6,11 +6,11 @@ import type { User, Match, Championship } from './definitions';
 // For this example, we use an in-memory store.
 
 let users: User[] = [
-  { id: '1', name: 'Alice', email: 'alice@example.com', password: 'password123', avatarUrl: 'https://picsum.photos/seed/avatar1/200/200', role: 'ADMIN' },
-  { id: '2', name: 'Bob', email: 'bob@example.com', password: 'password123', avatarUrl: 'https://picsum.photos/seed/avatar2/200/200', role: 'PLAYER' },
-  { id: '3', name: 'Charlie', email: 'charlie@example.com', password: 'password123', avatarUrl: 'https://picsum.photos/seed/avatar3/200/200', role: 'PLAYER' },
-  { id: '4', name: 'Diana', email: 'diana@example.com', password: 'password123', avatarUrl: 'https://picsum.photos/seed/avatar4/200/200', role: 'PLAYER' },
-  { id: '5', name: 'Eve', email: 'eve@example.com', password: 'password123', avatarUrl: 'https://picsum.photos/seed/avatar5/200/200', role: 'PLAYER' },
+  { id: '1', name: 'Alice', email: 'alice@example.com', password: 'password123', avatarUrl: 'https://picsum.photos/seed/people1/200/200', role: 'ADMIN' },
+  { id: '2', name: 'Bob', email: 'bob@example.com', password: 'password123', avatarUrl: 'https://picsum.photos/seed/people2/200/200', role: 'PLAYER' },
+  { id: '3', name: 'Charlie', email: 'charlie@example.com', password: 'password123', avatarUrl: 'https://picsum.photos/seed/people3/200/200', role: 'PLAYER' },
+  { id: '4', name: 'Diana', email: 'diana@example.com', password: 'password123', avatarUrl: 'https://picsum.photos/seed/people4/200/200', role: 'PLAYER' },
+  { id: '5', name: 'Eve', email: 'eve@example.com', password: 'password123', avatarUrl: 'https://picsum.photos/seed/people5/200/200', role: 'PLAYER' },
 ];
 
 let matches: Match[] = [
@@ -143,7 +143,7 @@ export async function addUser(user: Omit<User, 'id' | 'avatarUrl' | 'role'>): Pr
   const newUser: User = {
     ...user,
     id: (users.length + 2).toString(),
-    avatarUrl: `https://picsum.photos/seed/avatar${users.length + 2}/200/200`,
+    avatarUrl: `https://picsum.photos/seed/people${users.length + 2}/200/200`,
     role: 'PLAYER',
   };
   users.push(newUser);
