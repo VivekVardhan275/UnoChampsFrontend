@@ -129,7 +129,6 @@ export default function StandingsTable({ initialStandings }: { initialStandings:
                     <AvatarFallback>{standing.player.name.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <span className="font-medium group-hover:text-primary transition-colors">{standing.player.name}</span>
-                   {standing.player.role === 'ADMIN' && <Badge variant="secondary">Admin</Badge>}
                 </Link>
               </TableCell>
               <TableCell className="font-semibold text-primary text-lg">{standing.totalPoints.toLocaleString()}</TableCell>
