@@ -18,7 +18,7 @@ export default async function SeasonsPage() {
                         <CardTitle>Create New Season</CardTitle>
                         <CardDescription>Add a new season to the championship.</CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="py-8">
                         <SeasonForm />
                     </CardContent>
                 </Card>
