@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
-import { getUserByEmail, addUser, addMatch, getUsers } from './data';
+import { getUserByEmail, addUser, addMatch } from './data';
 import { sessionCookieName } from './auth';
 import type { MatchParticipant } from './definitions';
 
