@@ -33,7 +33,7 @@ const SortableHeader = ({
   const direction = isSorted ? sortConfig.direction : 'descending';
 
   return (
-    <TableHead>
+    <TableHead className="text-center">
       <Button variant="ghost" onClick={() => requestSort(sortKey)}>
         {children}
         <ArrowUpDown className={`ml-2 h-4 w-4 ${isSorted ? '' : 'text-muted-foreground'}`} />
@@ -125,7 +125,7 @@ export default function StandingsTable({ initialStandings, isSeasonStandings = f
         <TableBody>
           {sortedStandings.map((standing, index) => (
             <TableRow key={standing.player.id}>
-              <TableCell className="font-medium text-lg">{standing.rank}</TableCell>
+              <TableCell className="font-medium text-lg text-center">{standing.rank}</TableCell>
               <TableCell>
                 <Link href={`/players/${standing.player.id}`} className="flex items-center gap-3 group">
                   <Avatar>
@@ -135,29 +135,29 @@ export default function StandingsTable({ initialStandings, isSeasonStandings = f
                   <span className="font-medium group-hover:text-primary transition-colors">{standing.player.name}</span>
                 </Link>
               </TableCell>
-              <TableCell className="font-semibold text-primary text-lg">{standing.totalPoints.toLocaleString()}</TableCell>
+              <TableCell className="font-semibold text-primary text-lg text-center">{standing.totalPoints.toLocaleString()}</TableCell>
               {isSeasonStandings && (
                 <>
-                  <TableCell>
-                    <div className="flex items-center gap-1 text-muted-foreground">
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-1 text-muted-foreground">
                       <Swords className="h-4 w-4" />
                       <span>{standing.gamesPlayed}</span>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-1">
                       <Trophy className="h-4 w-4 text-yellow-500" />
                       <span>{standing.finishes.first}</span>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-1">
                       <Medal className="h-4 w-4 text-slate-400" />
                       <span>{standing.finishes.second}</span>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-1">
                       <Medal className="h-4 w-4 text-orange-400" />
                       <span>{standing.finishes.third}</span>
                     </div>
