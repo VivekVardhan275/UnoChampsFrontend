@@ -13,7 +13,7 @@ export default async function SeasonsPage() {
                 <p className="text-muted-foreground">Create, edit, and manage championship seasons.</p>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-1 space-y-8">
                     <Card>
                         <CardHeader>
                             <CardTitle>Create New Season</CardTitle>
@@ -25,7 +25,7 @@ export default async function SeasonsPage() {
                     </Card>
                 </div>
                 <div className="lg:col-span-2">
-                    <Card>
+                     <Card>
                         <CardHeader>
                             <CardTitle>Existing Seasons</CardTitle>
                              <CardDescription>View and manage all current and past seasons.</CardDescription>
