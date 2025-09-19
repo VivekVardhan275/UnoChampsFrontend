@@ -198,3 +198,12 @@ export async function deleteChampionship(id: string): Promise<{ success: boolean
     championships.splice(index, 1);
     return Promise.resolve({ success: true });
 }
+
+export async function deleteMatch(id: string): Promise<{ success: boolean }> {
+    const index = matches.findIndex(match => match.id === id);
+    if (index === -1) {
+        throw new Error('Match not found');
+    }
+    matches.splice(index, 1);
+    return Promise.resolve({ success: true });
+}

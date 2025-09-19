@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
-import { getUserByEmail, addUser, addMatch, addChampionship, deleteChampionship as deleteChampionshipFromDb, updateChampionship as updateChampionshipInDb, getChampionships } from './data';
+import { getUserByEmail, addUser, addMatch, addChampionship, deleteChampionship as deleteChampionshipFromDb, updateChampionship as updateChampionshipInDb, getChampionships, deleteMatch as deleteMatchFromDb } from './data';
 import { sessionCookieName } from './auth';
 import type { MatchParticipant, User } from './definitions';
 
@@ -200,6 +200,17 @@ export async function deleteSeason(id: string) {
         revalidatePath('/admin/seasons');
         return { message: 'Season deleted successfully.' };
     } catch (error) {
+        return { message: `Database Error: ${(error as Error).message}` };
+    }
+}
+
+export async function deleteMatch(id: string, seasonId: string) {
+    try {
+        await deleteMatchFromDb(id);
+        revalidatePath(`/admin/seasons/${seasonId}`);
+        revalidatePath('/');
+        return { message: 'Game deleted successfully.' };
+    } catch(error) {
         return { message: `Database Error: ${(error as Error).message}` };
     }
 }
