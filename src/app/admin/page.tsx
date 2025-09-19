@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, SlidersHorizontal, Users, Swords } from 'lucide-react';
+import { PlusCircle, SlidersHorizontal, Swords } from 'lucide-react';
 
 export default async function AdminDashboard() {
 
@@ -25,15 +25,6 @@ export default async function AdminDashboard() {
           <CardContent>
             <CardDescription>Create, edit, and delete championship seasons. Set start and end dates, and manage which games belong to which season.</CardDescription>
             <Button disabled variant="secondary" className="mt-4">Manage Seasons (Coming Soon)</Button>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Users /> Player Management</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CardDescription>View all registered players. Edit player details, assign roles (Admin/Player), or remove players from the league.</CardDescription>
-            <Button disabled variant="secondary" className="mt-4">Manage Players (Coming Soon)</Button>
           </CardContent>
         </Card>
          <Card className="lg:col-span-2">
