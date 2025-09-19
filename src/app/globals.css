@@ -8,30 +8,30 @@ body {
 
 @layer base {
   :root {
-    --background: 210 40% 96.1%;
+    --background: 240 5% 96%;
     --foreground: 222.2 84% 4.9%;
-    --card: 210 40% 96.1%;
+    --card: 240 5% 100%;
     --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
+    --popover: 240 5% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 197.1 71.1% 52.9%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 0 72% 51%; /* UNO Red */
+    --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 91.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 89.1%;
+    --muted: 210 40% 94.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 33.3 100% 50%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 48 96% 53%; /* UNO Yellow */
+    --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 197.1 71.1% 52.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --ring: 211 82% 47%; /* UNO Blue */
+    --chart-1: 0 72% 51%;
+    --chart-2: 48 96% 53%;
+    --chart-3: 211 82% 47%;
+    --chart-4: 139 51% 46%;
+    --chart-5: 222.2 84% 4.9%;
     --radius: 0.5rem;
   }
   .dark {
@@ -41,19 +41,19 @@ body {
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 197.1 71.1% 62.9%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 0 63% 51%; /* UNO Red */
+    --primary-foreground: 0 0% 100%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 217.2 32.6% 22.5%;
     --muted-foreground: 215.4 16.3% 56.9%;
-    --accent: 33.3 100% 50%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 48 96% 53%; /* UNO Yellow */
+    --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 197.1 71.1% 62.9%;
+    --ring: 211 82% 57%; /* UNO Blue */
   }
 }
 
