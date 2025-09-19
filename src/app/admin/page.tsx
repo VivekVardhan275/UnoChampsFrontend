@@ -24,16 +24,20 @@ export default async function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <CardDescription>Create, edit, and delete championship seasons. Set start and end dates, and manage which games belong to which season.</CardDescription>
-            <Button disabled variant="secondary" className="mt-4">Manage Seasons (Coming Soon)</Button>
+            <Button asChild className="mt-4">
+              <Link href="/admin/seasons">Manage Seasons</Link>
+            </Button>
           </CardContent>
         </Card>
-         <Card className="lg:col-span-2">
+         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Swords /> Game & Match History</CardTitle>
           </CardHeader>
           <CardContent>
-            <CardDescription>Review, edit, or delete past match results. Correct errors in scoring or player rankings after a match has been logged.</CardDescription>
-            <Button disabled variant="secondary" className="mt-4">Manage Games (Coming Soon)</Button>
+            <CardDescription>Review past match results and current league standings, exactly as a player would see them.</CardDescription>
+            <Button asChild className="mt-4">
+              <Link href="/">View Standings</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>

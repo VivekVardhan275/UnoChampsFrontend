@@ -136,6 +136,10 @@ export async function getChampionships(): Promise<Championship[]> {
   return Promise.resolve(championships);
 }
 
+export async function getChampionshipById(id: string): Promise<Championship | undefined> {
+    return Promise.resolve(championships.find(c => c.id === id));
+}
+
 // Note: These mutations would interact with a database in a real application.
 // They are simplified for this mock data setup.
 
@@ -157,4 +161,35 @@ export async function addMatch(match: Omit<Match, 'id'>): Promise<Match> {
   };
   matches.push(newMatch);
   return Promise.resolve(newMatch);
+}
+
+export async function addChampionship(name: string): Promise<Championship> {
+    const newChampionship: Championship = {
+        id: `championship${championships.length + 2}`,
+        name,
+    };
+    championships.push(newChampionship);
+    return Promise.resolve(newChampionship);
+}
+
+export async function updateChampionship(id: string, name: string): Promise<Championship> {
+    const index = championships.findIndex(c => c.id === id);
+    if (index === -1) {
+        throw new Error('Championship not found');
+    }
+    championships[index].name = name;
+    return Promise.resolve(championships[index]);
+}
+
+export async function deleteChampionship(id: string): Promise<{ success: boolean }> {
+    const hasMatches = matches.some(match => match.championshipId === id);
+    if (hasMatches) {
+        throw new Error('Cannot delete a season with existing matches.');
+    }
+    const index = championships.findIndex(c => c.id === id);
+    if (index === -1) {
+        throw new Error('Championship not found');
+    }
+    championships.splice(index, 1);
+    return Promise.resolve({ success: true });
 }

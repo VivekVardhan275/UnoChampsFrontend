@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
-import { getUserByEmail, addUser, addMatch } from './data';
+import { getUserByEmail, addUser, addMatch, addChampionship, deleteChampionship as deleteChampionshipFromDb, updateChampionship as updateChampionshipInDb } from './data';
 import { sessionCookieName } from './auth';
 import type { MatchParticipant, User } from './definitions';
 
@@ -127,4 +127,60 @@ export async function logMatch(data: { participants: MatchParticipant[] }) {
     revalidatePath('/admin');
     revalidatePath('/');
     redirect('/admin');
+}
+
+const seasonSchema = z.object({
+    name: z.string().min(3, { message: "Season name must be at least 3 characters." }),
+});
+
+export async function createSeason(prevState: any, formData: FormData) {
+    const validatedFields = seasonSchema.safeParse({
+        name: formData.get('name'),
+    });
+
+    if (!validatedFields.success) {
+        return {
+            errors: validatedFields.error.flatten().fieldErrors,
+            message: 'Invalid fields. Failed to create season.',
+        };
+    }
+
+    try {
+        await addChampionship(validatedFields.data.name);
+    } catch (error) {
+        return { message: 'Database Error: Failed to create season.' };
+    }
+    revalidatePath('/admin/seasons');
+    return { message: 'Season created successfully.' };
+}
+
+export async function updateSeason(id: string, prevState: any, formData: FormData) {
+    const validatedFields = seasonSchema.safeParse({
+        name: formData.get('name'),
+    });
+
+    if (!validatedFields.success) {
+        return {
+            errors: validatedFields.error.flatten().fieldErrors,
+            message: 'Invalid fields. Failed to update season.',
+        };
+    }
+
+    try {
+        await updateChampionshipInDb(id, validatedFields.data.name);
+    } catch (error) {
+        return { message: `Database Error: ${(error as Error).message}` };
+    }
+    revalidatePath('/admin/seasons');
+    redirect('/admin/seasons');
+}
+
+export async function deleteSeason(id: string) {
+    try {
+        await deleteChampionshipFromDb(id);
+        revalidatePath('/admin/seasons');
+        return { message: 'Season deleted successfully.' };
+    } catch (error) {
+        return { message: `Database Error: ${(error as Error).message}` };
+    }
 }
