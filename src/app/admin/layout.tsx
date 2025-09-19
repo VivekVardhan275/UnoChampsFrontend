@@ -42,7 +42,7 @@ export default async function AdminLayout({
                     </Link>
                 </Button>
                  <Button variant="ghost" className="justify-start" asChild>
-                    <Link href="/">
+                    <Link href="/admin/standings">
                         <Swords className="mr-2 h-4 w-4" />
                         View Standings
                     </Link>

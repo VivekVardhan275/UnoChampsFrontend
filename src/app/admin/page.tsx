@@ -41,7 +41,7 @@ export default async function AdminDashboard() {
           <CardContent>
             <CardDescription>Review past match results and current league standings, exactly as a player would see them.</CardDescription>
             <Button asChild className="mt-4">
-              <Link href="/">View Standings</Link>
+              <Link href="/admin/standings">View Standings</Link>
             </Button>
           </CardContent>
         </Card>
