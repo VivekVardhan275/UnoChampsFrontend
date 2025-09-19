@@ -13,6 +13,8 @@ export type MatchParticipant = {
   points: number;
 };
 
+export type MatchToCreate = Omit<Match, 'id'>;
+
 export type Match = {
   id: string;
   championshipId: string;

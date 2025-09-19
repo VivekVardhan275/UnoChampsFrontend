@@ -1,6 +1,6 @@
 'use server';
 
-import type { User, Match, Championship } from './definitions';
+import type { User, Match, Championship, MatchToCreate } from './definitions';
 
 // In a real app, you would fetch this from a database.
 // For this example, we use an in-memory store.
@@ -159,7 +159,7 @@ export async function addUser(user: Omit<User, 'id' | 'avatarUrl' | 'role'>): Pr
   return Promise.resolve(newUser);
 }
 
-export async function addMatch(match: Omit<Match, 'id'>): Promise<Match> {
+export async function addMatch(match: MatchToCreate): Promise<Match> {
   const newMatch: Match = {
     ...match,
     id: `match${matches.length + 2}`,

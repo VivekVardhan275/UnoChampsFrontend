@@ -6,8 +6,11 @@ export default async function LogMatchPage() {
     const championships = await getChampionships();
     
     return (
-        <div>
-            <h1 className="text-3xl font-bold mb-6">Log New Match Result</h1>
+        <div className="space-y-6">
+            <div className="text-center">
+                <h1 className="text-3xl font-bold">Log New Match Result</h1>
+                <p className="text-muted-foreground">Select the season, date, and participants for the new match.</p>
+            </div>
             <MatchEntryForm allUsers={users} allChampionships={championships} />
         </div>
     )

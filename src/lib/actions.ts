@@ -111,8 +111,9 @@ export async function register(prevState: any, formData: FormData) {
 
 const matchSchema = z.object({
     championshipId: z.string().min(1, 'Season is required.'),
+    date: z.date({ required_error: 'A date for the match is required.' }),
     participants: z.array(z.object({
-        userId: z.string(),
+        userId: z.string().min(1, "Player is required."),
         rank: z.coerce.number().min(1, "Rank is required"),
         points: z.coerce.number().min(0, "Points must be 0 or more"),
     })).min(2, 'At least two players must be selected.')
@@ -121,6 +122,12 @@ const matchSchema = z.object({
     return new Set(ranks).size === ranks.length;
 }, {
     message: 'Each player must have a unique rank.',
+    path: ['participants'],
+}).refine(data => {
+    const userIds = data.participants.map(p => p.userId);
+    return new Set(userIds).size === userIds.length;
+}, {
+    message: 'Each player can only be added once.',
     path: ['participants'],
 });
 
@@ -134,16 +141,17 @@ export async function logMatch(data: z.infer<typeof matchSchema>) {
     try {
         await addMatch({
             championshipId: validatedData.data.championshipId,
-            date: new Date().toISOString(),
-            participants: validatedData.data.participants,
+            date: validatedData.data.date.toISOString(),
+            participants: validatedData.data.participants.map(({ userId, rank, points }) => ({ userId, rank, points })),
         });
     } catch(error) {
         throw new Error('Database Error: Failed to log match.');
     }
     
-    revalidatePath('/admin');
+    revalidatePath('/admin/log-match');
+    revalidatePath(`/admin/seasons/${data.championshipId}`);
     revalidatePath('/');
-    redirect('/admin');
+    redirect(`/admin/seasons/${data.championshipId}`);
 }
 
 const seasonSchema = z.object({
