@@ -18,7 +18,7 @@ const Logo = () => (
     <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground">
       <span className="text-lg font-bold">U</span>
     </div>
-    <span className="hidden sm:inline-block">UNOstat</span>
+    <span className="hidden sm:inline-block">UNO CHAMPS</span>
   </Link>
 );
 
