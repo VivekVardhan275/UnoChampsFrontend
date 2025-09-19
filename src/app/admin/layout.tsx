@@ -16,13 +16,13 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="grid md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr] gap-8 items-start">
-        <aside className="hidden md:flex flex-col gap-2 sticky top-20">
-            <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2 mb-2">
+    <div className="flex flex-col gap-8">
+        <aside className="flex flex-col gap-2">
+            <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2 mb-2 border-b pb-2">
                 <Shield className="h-5 w-5"/>
                 Admin Panel
             </h2>
-            <nav className="flex flex-col gap-1">
+            <nav className="grid grid-cols-2 sm:flex sm:flex-row gap-2">
                 <Button variant="ghost" className="justify-start" asChild>
                     <Link href="/admin">
                         <Home className="mr-2 h-4 w-4" />
