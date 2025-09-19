@@ -99,9 +99,11 @@ export default async function Header() {
       <div className="container flex h-14 items-center justify-between">
         <Logo />
         <div className="flex items-center gap-4">
-          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-            <Link href="/rules" className="transition-colors hover:text-foreground/80 text-foreground/60">Rules</Link>
-          </nav>
+          {user?.role !== 'ADMIN' && (
+            <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+              <Link href="/rules" className="transition-colors hover:text-foreground/80 text-foreground/60">Rules</Link>
+            </nav>
+          )}
           <div className="flex items-center justify-end space-x-2">
             <ThemeToggle />
             <UserNav user={user} />
