@@ -1,16 +1,13 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getMatches, getUsers } from "@/lib/data";
 import { Users, Swords } from "lucide-react";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import StandingsTable from '@/components/standings/StandingsTable';
-import { calculateStandings } from '@/lib/utils';
 
 export default async function AdminDashboard() {
   const users = await getUsers();
   const matches = await getMatches();
-  const standings = calculateStandings(matches, users);
 
   return (
     <div className="space-y-6">
@@ -46,16 +43,6 @@ export default async function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
-      <Card>
-          <CardHeader>
-              <CardTitle>Current Standings Overview</CardTitle>
-              <CardDescription>A quick look at the current leaderboard.</CardDescription>
-          </CardHeader>
-          <CardContent>
-              <StandingsTable initialStandings={standings.slice(0, 5)} />
-          </CardContent>
-      </Card>
-
     </div>
   );
 }
