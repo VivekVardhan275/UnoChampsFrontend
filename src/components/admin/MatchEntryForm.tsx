@@ -170,7 +170,7 @@ export default function MatchEntryForm({ allChampionships }: { allChampionships:
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handlePreview)} className="space-y-6 max-w-4xl mx-auto">
+      <form onSubmit={form.handleSubmit(handlePreview)} className="space-y-6 max-w-2xl mx-auto">
         <Card>
             <CardHeader>
                 <CardTitle>1. Match Details</CardTitle>
