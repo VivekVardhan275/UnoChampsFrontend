@@ -95,11 +95,11 @@ export default async function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
-        <div className="flex-1">
+      <div className="container flex h-14 items-center justify-between">
+        <div>
           <Logo />
         </div>
-        <nav className="flex items-center gap-4 lg:gap-6 text-sm flex-1 justify-center">
+        <nav className="flex items-center gap-4 lg:gap-6 text-sm">
           <Link
             href="/"
             className="transition-colors hover:text-foreground/80 text-foreground/60 flex items-center gap-1"
@@ -115,7 +115,7 @@ export default async function Header() {
             Rules
           </Link>
         </nav>
-        <div className="flex flex-1 items-center justify-end">
+        <div className="flex items-center justify-end">
           <UserNav user={user} />
         </div>
       </div>
