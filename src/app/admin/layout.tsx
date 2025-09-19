@@ -18,7 +18,7 @@ export default async function AdminLayout({
   return (
     <div className="flex flex-col gap-8">
         <aside className="flex flex-col gap-2">
-            <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2 mb-2 border-b pb-2">
+            <h2 className="text-lg font-semibold tracking-tight flex items-center justify-center gap-2 mb-2 border-b pb-2">
                 <Shield className="h-5 w-5"/>
                 Admin Panel
             </h2>
