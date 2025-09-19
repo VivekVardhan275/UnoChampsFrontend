@@ -117,7 +117,7 @@ export async function logMatch(data: { participants: MatchParticipant[] }) {
         throw new Error('Database Error: Failed to log match.');
     }
     
-    revalidatePath('/');
     revalidatePath('/admin');
+    revalidatePath('/');
     redirect('/admin');
 }
