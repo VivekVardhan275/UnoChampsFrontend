@@ -42,7 +42,7 @@ const SortableHeader = ({
   );
 };
 
-export default function StandingsTable({ initialStandings }: { initialStandings: Standing[] }) {
+export default function StandingsTable({ initialStandings, isSeasonStandings = false }: { initialStandings: Standing[], isSeasonStandings?: boolean }) {
   const [sortConfig, setSortConfig] = useState<{
     key: SortKey;
     direction: 'ascending' | 'descending';
@@ -112,10 +112,14 @@ export default function StandingsTable({ initialStandings }: { initialStandings:
             <SortableHeader sortKey="rank" sortConfig={sortConfig} requestSort={requestSort}>Rank</SortableHeader>
             <TableHead>Player</TableHead>
             <SortableHeader sortKey="totalPoints" sortConfig={sortConfig} requestSort={requestSort}>Total Points</SortableHeader>
-            <SortableHeader sortKey="gamesPlayed" sortConfig={sortConfig} requestSort={requestSort}>Games</SortableHeader>
-            <SortableHeader sortKey="first" sortConfig={sortConfig} requestSort={requestSort}>1st</SortableHeader>
-            <SortableHeader sortKey="second" sortConfig={sortConfig} requestSort={requestSort}>2nd</SortableHeader>
-            <SortableHeader sortKey="third" sortConfig={sortConfig} requestSort={requestSort}>3rd</SortableHeader>
+            {isSeasonStandings && (
+              <>
+                <SortableHeader sortKey="gamesPlayed" sortConfig={sortConfig} requestSort={requestSort}>Games</SortableHeader>
+                <SortableHeader sortKey="first" sortConfig={sortConfig} requestSort={requestSort}>1st</SortableHeader>
+                <SortableHeader sortKey="second" sortConfig={sortConfig} requestSort={requestSort}>2nd</SortableHeader>
+                <SortableHeader sortKey="third" sortConfig={sortConfig} requestSort={requestSort}>3rd</SortableHeader>
+              </>
+            )}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -132,30 +136,34 @@ export default function StandingsTable({ initialStandings }: { initialStandings:
                 </Link>
               </TableCell>
               <TableCell className="font-semibold text-primary text-lg">{standing.totalPoints.toLocaleString()}</TableCell>
-              <TableCell>
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <Swords className="h-4 w-4" />
-                  <span>{standing.gamesPlayed}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-1">
-                  <Trophy className="h-4 w-4 text-yellow-500" />
-                  <span>{standing.finishes.first}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-1">
-                  <Medal className="h-4 w-4 text-slate-400" />
-                  <span>{standing.finishes.second}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-1">
-                  <Medal className="h-4 w-4 text-orange-400" />
-                  <span>{standing.finishes.third}</span>
-                </div>
-              </TableCell>
+              {isSeasonStandings && (
+                <>
+                  <TableCell>
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <Swords className="h-4 w-4" />
+                      <span>{standing.gamesPlayed}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Trophy className="h-4 w-4 text-yellow-500" />
+                      <span>{standing.finishes.first}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Medal className="h-4 w-4 text-slate-400" />
+                      <span>{standing.finishes.second}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Medal className="h-4 w-4 text-orange-400" />
+                      <span>{standing.finishes.third}</span>
+                    </div>
+                  </TableCell>
+                </>
+              )}
             </TableRow>
           ))}
         </TableBody>

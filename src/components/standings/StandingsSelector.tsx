@@ -97,14 +97,17 @@ export default function StandingsSelector({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Trophy className="text-accent" />
+            <Trophy className="text-primary" />
             {selectedMatch === 'all'
               ? 'Current Season Leaderboard'
               : selectedMatchObject?.name ? `${selectedMatchObject.name} Results` : 'Game Results'}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <StandingsTable initialStandings={standings} />
+          <StandingsTable 
+            initialStandings={standings} 
+            isSeasonStandings={selectedMatch === 'all'} 
+          />
         </CardContent>
       </Card>
     </div>
