@@ -132,12 +132,22 @@ export async function getUserByName(name: string): Promise<User | undefined> {
     return Promise.resolve(users.find(u => u.name.toLowerCase() === name.toLowerCase()));
 }
 
+export async function getUsersByName(names: string[]): Promise<User[]> {
+    const lowerCaseNames = names.map(name => name.toLowerCase());
+    return Promise.resolve(users.filter(u => lowerCaseNames.includes(u.name.toLowerCase())));
+}
+
+
 export async function getUserByEmail(email: string): Promise<User | undefined> {
   return Promise.resolve(users.find(u => u.email === email));
 }
 
 export async function getMatches(): Promise<Match[]> {
   return Promise.resolve(matches);
+}
+
+export async function getMatchById(id: string): Promise<Match | undefined> {
+    return Promise.resolve(matches.find(m => m.id === id));
 }
 
 export async function getMatchesByUserId(userId: string): Promise<Match[]> {
@@ -189,6 +199,16 @@ export async function addMatch(match: MatchToCreate): Promise<Match> {
   matches.push(newMatch);
   return Promise.resolve(newMatch);
 }
+
+export async function updateMatch(id: string, data: MatchToCreate): Promise<Match> {
+    const index = matches.findIndex(m => m.id === id);
+    if (index === -1) {
+        throw new Error("Match not found");
+    }
+    matches[index] = { ...matches[index], ...data };
+    return Promise.resolve(matches[index]);
+}
+
 
 export async function addChampionship(name: string): Promise<Championship> {
     const newChampionship: Championship = {

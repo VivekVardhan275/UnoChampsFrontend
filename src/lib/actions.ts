@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
-import { getUserByEmail, addUser, addMatch, addChampionship, deleteChampionship as deleteChampionshipFromDb, updateChampionship as updateChampionshipInDb, getChampionships, deleteMatch as deleteMatchFromDb, findOrCreateUserByName } from './data';
+import { getUserByEmail, addUser, addMatch, addChampionship, deleteChampionship as deleteChampionshipFromDb, updateChampionship as updateChampionshipInDb, getChampionships, deleteMatch as deleteMatchFromDb, findOrCreateUserByName, updateMatch as updateMatchInDb } from './data';
 import { sessionCookieName } from './auth';
 import type { MatchParticipant, User } from './definitions';
 
@@ -166,6 +166,41 @@ export async function logMatch(data: z.infer<typeof matchSchema>) {
     revalidatePath('/');
     redirect(`/admin/seasons/${data.championshipId}`);
 }
+
+export async function updateMatch(matchId: string, data: z.infer<typeof matchSchema>) {
+    const validatedData = matchSchema.safeParse(data);
+    if (!validatedData.success) {
+        throw new Error(validatedData.error.flatten().fieldErrors.participants?.[0] || 'Invalid match data.');
+    }
+    
+    try {
+        const participantPromises = validatedData.data.participants.map(async (p) => {
+            const user = await findOrCreateUserByName(p.name);
+            return {
+                userId: user.id,
+                rank: p.rank,
+                points: p.points,
+            };
+        });
+
+        const participantsWithUserIds = await Promise.all(participantPromises);
+
+        await updateMatchInDb(matchId, {
+            championshipId: validatedData.data.championshipId,
+            name: validatedData.data.name,
+            date: validatedData.data.date.toISOString(),
+            participants: participantsWithUserIds,
+        });
+    } catch(error) {
+        throw new Error('Database Error: Failed to update match.');
+    }
+    
+    revalidatePath(`/admin/seasons/${data.championshipId}`);
+    revalidatePath(`/admin/seasons/${data.championshipId}/match/${matchId}/edit`);
+    revalidatePath('/');
+    redirect(`/admin/seasons/${data.championshipId}`);
+}
+
 
 const seasonSchema = z.object({
     name: z.string().min(3, { message: "Season name must be at least 3 characters." }),

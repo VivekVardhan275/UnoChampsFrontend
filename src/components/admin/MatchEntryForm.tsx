@@ -4,21 +4,22 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
 import * as z from "zod";
 import { format } from "date-fns";
-import { CalendarIcon, User, Championship } from "lucide-react";
+import { CalendarIcon, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "../ui/card";
-import { Trash2, ListPlus, UserPlus, Check, ChevronsUpDown, Eye, Wand2, ArrowLeft } from "lucide-react";
-import { logMatch } from "@/lib/actions";
+import { Trash2, ListPlus, UserPlus, Eye, ArrowLeft } from "lucide-react";
+import { logMatch, updateMatch } from "@/lib/actions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { User as UserType } from "@/lib/definitions";
+import { useEffect, useState } from "react";
+import { Avatar, AvatarFallback } from "../ui/avatar";
+import { Championship, Match, User } from "@/lib/definitions";
+import { getUsersByName } from "@/lib/data";
 
 const ParticipantSchema = z.object({
   name: z.string().min(1, "Player name is required."),
@@ -49,20 +50,43 @@ const FormSchema = z.object({
 type FormValues = z.infer<typeof FormSchema>;
 type ParticipantWithPoints = z.infer<typeof ParticipantSchema> & { points: number };
 
-export default function MatchEntryForm({ allChampionships }: { allChampionships: Championship[] }) {
+export default function MatchEntryForm({ allChampionships, match }: { allChampionships: Championship[], match?: Match & { participants: ({ user: User } & Match['participants'][0])[]} }) {
+  const isEditing = !!match;
   const [step, setStep] = useState<'entry' | 'preview'>('entry');
   const [previewData, setPreviewData] = useState<{ formValues: FormValues; calculatedParticipants: ParticipantWithPoints[] } | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      championshipId: allChampionships[0]?.id || '',
-      name: '',
-      date: new Date(),
+      championshipId: match?.championshipId || allChampionships[0]?.id || '',
+      name: match?.name || '',
+      date: match ? new Date(match.date) : new Date(),
       participants: [],
-      multiplier: 10,
+      multiplier: 10, // Assuming a default multiplier, you might want to fetch this if it's part of the match
     },
   });
+
+  useEffect(() => {
+    if (isEditing && match) {
+      const fetchParticipantDetails = async () => {
+        const participantUsers = await getUsersByName(match.participants.map(p => p.userId));
+        const userMap = new Map(participantUsers.map(u => [u.id, u]));
+
+        form.reset({
+          championshipId: match.championshipId,
+          name: match.name,
+          date: new Date(match.date),
+          multiplier: 10, // You need to decide how to get this. Maybe it's constant, or stored with the match
+          participants: match.participants.sort((a,b) => a.rank - b.rank).map(p => ({
+            name: userMap.get(p.userId)?.name || '',
+            rank: p.rank,
+          }))
+        });
+      }
+      fetchParticipantDetails();
+    }
+  }, [isEditing, match, form]);
+
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -95,18 +119,30 @@ export default function MatchEntryForm({ allChampionships }: { allChampionships:
     }
 
     try {
-        await logMatch(dataToSubmit);
-        toast({
-          title: "Match logged successfully!",
-          description: "The standings have been updated and you have been redirected to the season's game list.",
-        });
-        form.reset({
-            championshipId: allChampionships[0]?.id || '',
-            name: '',
-            date: new Date(),
-            participants: [],
-            multiplier: 10,
-        });
+        if(isEditing && match) {
+            await updateMatch(match.id, dataToSubmit);
+            toast({
+                title: "Match updated successfully!",
+                description: "The standings have been updated.",
+            });
+        } else {
+            await logMatch(dataToSubmit);
+            toast({
+            title: "Match logged successfully!",
+            description: "The standings have been updated.",
+            });
+        }
+        
+        if(!isEditing) {
+            form.reset({
+                championshipId: allChampionships[0]?.id || '',
+                name: '',
+                date: new Date(),
+                participants: [],
+                multiplier: 10,
+            });
+        }
+
         setStep('entry');
         setPreviewData(null);
     } catch(error) {
@@ -128,7 +164,7 @@ export default function MatchEntryForm({ allChampionships }: { allChampionships:
                 <Button variant="outline" size="icon" onClick={() => setStep('entry')}><ArrowLeft /></Button>
                 <div>
                     <h2 className="text-2xl font-bold">Review Match Details</h2>
-                    <p className="text-muted-foreground">Confirm the results below before logging the match.</p>
+                    <p className="text-muted-foreground">Confirm the results below before saving.</p>
                 </div>
             </div>
             <Card>
@@ -163,7 +199,10 @@ export default function MatchEntryForm({ allChampionships }: { allChampionships:
                         <ArrowLeft className="mr-2" /> Back to Edit
                     </Button>
                     <Button onClick={onSubmit} disabled={form.formState.isSubmitting}>
-                         {form.formState.isSubmitting ? "Logging..." : <><ListPlus className="mr-2 h-4 w-4" /> Log Match</> }
+                         {form.formState.isSubmitting 
+                            ? (isEditing ? "Saving..." : "Logging...") 
+                            : (isEditing ? <><Save className="mr-2 h-4 w-4" /> Save Changes</> : <><ListPlus className="mr-2 h-4 w-4" /> Log Match</>)
+                         }
                     </Button>
                 </CardFooter>
             </Card>
@@ -187,7 +226,7 @@ export default function MatchEntryForm({ allChampionships }: { allChampionships:
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Season</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isEditing}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a season" />
@@ -209,7 +248,7 @@ export default function MatchEntryForm({ allChampionships }: { allChampionships:
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Game Name</FormLabel>
-                                <FormControl><Input {...field} placeholder="e.g. Game #1" /></FormControl>
+                                <FormControl><Input {...field} placeholder="e.g. Game #1" disabled={isEditing} /></FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}

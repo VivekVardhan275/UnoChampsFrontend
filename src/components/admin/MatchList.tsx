@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { deleteMatch } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
+import Link from 'next/link';
 
 export default function MatchList({ matches, users, seasonId }: { matches: Match[], users: User[], seasonId: string }) {
     const { toast } = useToast();
@@ -50,9 +51,11 @@ export default function MatchList({ matches, users, seasonId }: { matches: Match
                         <p className="text-sm text-muted-foreground">{format(new Date(match.date), 'MMMM d, yyyy')}</p>
                     </div>
                      <div className="flex items-center gap-2">
-                        <Button variant="secondary" disabled>
-                            <Pen className="mr-2 h-4 w-4"/>
-                            Edit Game (soon)
+                        <Button variant="secondary" asChild>
+                            <Link href={`/admin/seasons/${seasonId}/match/${match.id}/edit`}>
+                                <Pen className="mr-2 h-4 w-4"/>
+                                Edit Game
+                            </Link>
                         </Button>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
