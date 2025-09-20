@@ -215,10 +215,31 @@ export async function updateMatchInApi(season: string, payload: AddOrUpdateMatch
     }
 }
 
-export async function deleteMatch(id: string): Promise<void> {
-    matches = matches.filter(m => m.id !== id);
-    return Promise.resolve();
+type DeleteMatchPayload = {
+    gameName: string;
+    members: string[];
+    ranks: string[];
+    points: string[];
 }
+export async function deleteMatchFromApi(season: string, payload: DeleteMatchPayload, token: string) {
+     try {
+        const response = await axios.delete(
+            `${backendUrl}/api/season/games/delete-game`,
+            { 
+                params: { season: season },
+                headers: { Authorization: `Bearer ${token}` },
+                data: payload,
+            }
+        );
+        return response.data;
+    } catch (error) {
+        const axiosError = error as AxiosError;
+        const errorMessage = (axiosError.response?.data as { message?: string })?.message || axiosError.message;
+        console.error('Failed to delete match:', errorMessage);
+        throw new Error(`API Error: ${errorMessage}`);
+    }
+}
+
 
 export async function addChampionshipToApi(seasonName: string, token: string): Promise<Championship[]> {
     try {

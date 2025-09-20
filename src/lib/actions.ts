@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -5,8 +6,7 @@ import { revalidatePath } from 'next/cache';
 
 import { 
     updateChampionshipInApi,
-    deleteMatch as deleteMatchFromApi,
-    updateMatch as updateMatchInApi,
+    updateMatchInApi,
     getUsers,
 } from './api';
 import type { User } from './definitions';
@@ -59,17 +59,6 @@ export async function deleteSeason(id: string) {
         revalidatePath('/admin/seasons');
         return { message: 'Season deleted successfully.' };
     } catch (error) {
-        return { message: `Database Error: ${(error as Error).message}` };
-    }
-}
-
-export async function deleteMatch(id: string, seasonId: string) {
-    try {
-        await deleteMatchFromApi(id);
-        revalidatePath(`/admin/seasons/${seasonId}`);
-        revalidatePath('/');
-        return { message: 'Game deleted successfully.' };
-    } catch(error) {
         return { message: `Database Error: ${(error as Error).message}` };
     }
 }

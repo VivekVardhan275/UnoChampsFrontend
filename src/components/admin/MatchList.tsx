@@ -19,27 +19,71 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { deleteMatch } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function MatchList({ matches, users, seasonId }: { matches: Match[], users: User[], seasonId: string }) {
     const { toast } = useToast();
+    const { token } = useAuth();
+    const router = useRouter();
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
     const userMap = new Map(users.map(u => [u.id, u]));
 
-    const handleDelete = async (matchId: string) => {
-        setIsDeleting(matchId);
-        const result = await deleteMatch(matchId, seasonId);
-        if (result?.message) {
+    const handleDelete = async (match: Match) => {
+        if (!token) {
             toast({
-                title: result.message.includes("Error") ? "Error" : "Success",
-                description: result.message,
-                variant: result.message.includes("Error") ? "destructive" : "default",
+                title: "Error",
+                description: "Authentication token not found.",
+                variant: "destructive",
             });
+            return;
         }
-        setIsDeleting(null);
+
+        setIsDeleting(match.id);
+        
+        const userMap = new Map(users.map(u => [u.id, u]));
+        const members = match.participants.map(p => userMap.get(p.userId)?.name).filter(Boolean) as string[];
+
+        const payload = {
+            gameName: match.name,
+            members: members,
+            ranks: match.participants.map(p => p.rank.toString()),
+            points: match.participants.map(p => p.points.toString()),
+        };
+
+        try {
+            const response = await fetch(`/api/season/games/delete-game?season=${encodeURIComponent(seasonId)}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to delete game.');
+            }
+
+            toast({
+                title: "Success",
+                description: "Game deleted successfully.",
+            });
+            router.refresh();
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+            toast({
+                title: "Error",
+                description: errorMessage,
+                variant: "destructive",
+            });
+        } finally {
+            setIsDeleting(null);
+        }
     }
     
     if (matches.length === 0) {
@@ -78,7 +122,7 @@ export default function MatchList({ matches, users, seasonId }: { matches: Match
                                 <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
-                                    onClick={() => handleDelete(match.id)}
+                                    onClick={() => handleDelete(match)}
                                     disabled={isDeleting === match.id}
                                     className="bg-destructive hover:bg-destructive/90"
                                 >
