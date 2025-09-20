@@ -2,6 +2,7 @@
 
 import axios from 'axios';
 import type { Championship, Match, User, MatchToCreate } from './definitions';
+import { findOrCreateUserByName } from './actions';
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -13,40 +14,7 @@ let users: User[] = [
     { id: '99', name: 'Admin', email: 'admin@unostat.com', role: 'ADMIN', avatarUrl: 'https://picsum.photos/seed/Admin/200/200' },
 ];
 let championships: Championship[] = [];
-let matches: Match[] = [
-    {
-        id: '101',
-        name: 'Game 1',
-        championshipId: 'Season 1',
-        date: new Date('2024-05-10').toISOString(),
-        participants: [
-            { userId: '1', rank: 1, points: 20 },
-            { userId: '2', rank: 2, points: 10 },
-            { userId: '3', rank: 3, points: 0 },
-        ]
-    },
-    {
-        id: '102',
-        name: 'Game 2',
-        championshipId: 'Season 1',
-        date: new Date('2024-05-12').toISOString(),
-        participants: [
-            { userId: '3', rank: 1, points: 20 },
-            { userId: '1', rank: 2, points: 10 },
-            { userId: '2', rank: 3, points: 0 },
-        ]
-    },
-    {
-        id: '103',
-        name: 'Tournament Opener',
-        championshipId: '2024 Championship',
-        date: new Date('2024-06-01').toISOString(),
-        participants: [
-            { userId: '2', rank: 1, points: 10 },
-            { userId: '1', rank: 2, points: 0 },
-        ]
-    }
-];
+let matches: Match[] = [];
 
 let nextUserId = 100;
 let nextMatchId = 104;
@@ -84,18 +52,62 @@ export async function getMatchesByUserId(userId: string): Promise<Match[]> {
     return Promise.resolve(matches.filter(m => m.participants.some(p => p.userId === userId)));
 }
 
-export async function getMatchesByChampionshipId(championshipId: string): Promise<Match[]> {
-    const championshipMatches = matches.filter(m => m.championshipId === championshipId);
+type ApiGame = {
+    gameName: string;
+    season: { seasonName: string };
+    members: string[];
+    ranks: string[];
+    points: string[];
+};
 
-    const matchesWithUsers = await Promise.all(championshipMatches.map(async (match) => {
-        const participantsWithUsers = await Promise.all(match.participants.map(async (p) => {
-            const user = await getUserById(p.userId);
-            return { ...p, user: user! };
+export async function getMatchesByChampionshipId(championshipId: string, token: string | null): Promise<Match[]> {
+    if (!token) {
+        console.error("Authentication token is missing for getMatchesByChampionshipId.");
+        return [];
+    }
+
+    try {
+        const response = await axios.get(`${backendUrl}/api/season/games/get-games`, {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { season: championshipId }
+        });
+
+        const apiGames: ApiGame[] = response.data;
+        
+        const transformedMatches: Match[] = await Promise.all(apiGames.map(async (game, index) => {
+            const participantPromises = game.members.map(async (memberName, i) => {
+                const user = await findOrCreateUserByName(memberName);
+                return {
+                    userId: user.id,
+                    rank: parseInt(game.ranks[i], 10),
+                    points: parseInt(game.points[i], 10),
+                };
+            });
+            const participants = await Promise.all(participantPromises);
+            
+            // Extract date from gameName if possible, otherwise use current date.
+            // This is a placeholder as the API doesn't provide a date field.
+            const dateMatch = game.gameName.match(/(\d{2}\/\d{2}\/\d{4})/);
+            let date = new Date();
+            if (dateMatch) {
+                const [day, month, year] = dateMatch[0].split('/');
+                date = new Date(`${year}-${month}-${day}`);
+            }
+
+            return {
+                id: `${championshipId}-${index}`, // Create a stable but temporary ID
+                name: game.gameName,
+                championshipId: game.season.seasonName,
+                date: date.toISOString(),
+                participants: participants,
+            };
         }));
-        return { ...match, participants: participantsWithUsers };
-    }));
-
-    return Promise.resolve(matchesWithUsers);
+        
+        return transformedMatches;
+    } catch (error) {
+        console.error('Failed to fetch games for season:', error);
+        return [];
+    }
 }
 
 export async function getChampionships(token?: string | null): Promise<Championship[]> {
@@ -117,15 +129,12 @@ export async function getChampionships(token?: string | null): Promise<Champions
         return seasons;
     } catch (error) {
         console.error('Failed to fetch championships:', error);
-        // Fallback to mock data if API fails
-        return [
-             { id: 'Season 1', name: 'Season 1'},
-            { id: '2024 Championship', name: '2024 Championship'},
-        ]
+        return []
     }
 }
 
 export async function getChampionshipById(id: string): Promise<Championship | undefined> {
+    // This function will now have to rely on the championships fetched by getChampionships
     return Promise.resolve(championships.find(c => c.id === id));
 }
 
@@ -178,21 +187,6 @@ export async function deleteChampionship(id: string): Promise<void> {
     }
     championships = championships.filter(c => c.id !== id);
     return Promise.resolve();
-}
-
-export async function findOrCreateUserByName(name: string): Promise<User> {
-    let user = users.find(u => u.name.toLowerCase() === name.toLowerCase());
-    if (!user) {
-        user = {
-            id: (nextUserId++).toString(),
-            name: name,
-            email: `${name.toLowerCase().replace(/\s/g, '')}@example.com`,
-            role: 'PLAYER',
-            avatarUrl: `https://picsum.photos/seed/${name}/200/200`
-        };
-        users.push(user);
-    }
-    return Promise.resolve(user);
 }
 
 export async function getUsersByName(names: string[]): Promise<User[]> {

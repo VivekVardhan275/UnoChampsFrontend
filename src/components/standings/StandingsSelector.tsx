@@ -9,37 +9,46 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trophy } from 'lucide-react';
+import { Trophy, Loader2 } from 'lucide-react';
 import StandingsTable from '@/components/standings/StandingsTable';
 import type { Championship, Match, User } from '@/lib/definitions';
 import { calculateStandings } from '@/lib/utils';
 import { format } from 'date-fns';
+import { getMatchesByChampionshipId } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function StandingsSelector({
   championships,
-  matches,
   users,
 }: {
   championships: Championship[];
-  matches: Match[];
   users: User[];
 }) {
+  const { token } = useAuth();
   const [selectedChampionship, setSelectedChampionship] = useState<string>('');
-  const [selectedMatch, setSelectedMatch] = useState<string>('all'); // 'all' for season standings
+  const [selectedMatch, setSelectedMatch] = useState<string>('all');
+  const [filteredMatches, setFilteredMatches] = useState<Match[]>([]);
+  const [isLoadingMatches, setIsLoadingMatches] = useState(false);
 
   useEffect(() => {
     // Default to the latest season if championships are available
     if (championships.length > 0) {
-      // Assuming the last one in the list is the latest.
-      // If there's a date field, sorting by it would be more reliable.
-      setSelectedChampionship(championships[championships.length - 1].id);
+      const sortedChampionships = [...championships].sort((a, b) => b.name.localeCompare(a.name));
+      setSelectedChampionship(sortedChampionships[0].id);
     }
   }, [championships]);
 
-  const filteredMatches = useMemo(() => {
-    return matches.filter((match) => match.championshipId === selectedChampionship)
-      .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [matches, selectedChampionship]);
+  useEffect(() => {
+    if (selectedChampionship && token) {
+      const fetchMatches = async () => {
+        setIsLoadingMatches(true);
+        const matches = await getMatchesByChampionshipId(selectedChampionship, token);
+        setFilteredMatches(matches.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        setIsLoadingMatches(false);
+      };
+      fetchMatches();
+    }
+  }, [selectedChampionship, token]);
 
   const standings = useMemo(() => {
     let matchesToCalculate: Match[] = [];
@@ -59,6 +68,7 @@ export default function StandingsSelector({
   const handleChampionshipChange = (championshipId: string) => {
     setSelectedChampionship(championshipId);
     setSelectedMatch('all');
+    setFilteredMatches([]);
   };
   
   const selectedMatchObject = filteredMatches.find(m => m.id === selectedMatch);
@@ -87,10 +97,17 @@ export default function StandingsSelector({
         <Select
           value={selectedMatch}
           onValueChange={setSelectedMatch}
-          disabled={!selectedChampionship}
+          disabled={!selectedChampionship || isLoadingMatches}
         >
           <SelectTrigger className="w-full sm:w-[280px]">
-            <SelectValue placeholder="Select a Game" />
+            {isLoadingMatches ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Loading Games...</span>
+              </div>
+            ) : (
+              <SelectValue placeholder="Select a Game" />
+            )}
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Games (Season Standings)</SelectItem>

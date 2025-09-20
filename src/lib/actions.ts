@@ -9,9 +9,30 @@ import {
     deleteChampionship as deleteChampionshipFromApi,
     updateChampionship as updateChampionshipInApi,
     deleteMatch as deleteMatchFromApi,
-    findOrCreateUserByName,
     updateMatch as updateMatchInApi,
+    getUsers, // Assuming this stays as a mock/internal utility
 } from './api';
+
+
+// This function simulates finding a user or creating one if they don't exist.
+// In a real backend, this would be a single API call. For now, it uses the mock user list.
+export async function findOrCreateUserByName(name: string): Promise<User> {
+    const allUsers = await getUsers();
+    let user = allUsers.find(u => u.name.toLowerCase() === name.toLowerCase());
+    if (!user) {
+         user = {
+            id: Math.random().toString(36).substr(2, 9),
+            name: name,
+            email: `${name.toLowerCase().replace(/\s/g, '')}@example.com`,
+            role: 'PLAYER',
+            avatarUrl: `https://picsum.photos/seed/${name}/200/200`
+        };
+        // This part is tricky without a backend; we can't really "add" a user here
+        // in a way that persists across requests without a proper backend endpoint.
+        // For the purpose of getting user IDs for match logging, this is okay for now.
+    }
+    return user;
+}
 
 
 const matchSchema = z.object({

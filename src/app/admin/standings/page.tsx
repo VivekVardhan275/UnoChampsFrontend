@@ -1,8 +1,8 @@
 'use client';
-import { getMatches, getUsers, getChampionships } from '@/lib/api';
+import { getUsers, getChampionships } from '@/lib/api';
 import StandingsSelector from '@/components/standings/StandingsSelector';
 import { useAuth } from '@/contexts/AuthContext';
-import { Championship, Match, User } from '@/lib/definitions';
+import { Championship, User } from '@/lib/definitions';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -10,7 +10,6 @@ export default function AdminStandingsPage() {
   const { token, isLoading: isAuthLoading } = useAuth();
   const [data, setData] = useState<{
     users: User[];
-    matches: Match[];
     championships: Championship[];
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -19,12 +18,11 @@ export default function AdminStandingsPage() {
     if (!isAuthLoading && token) {
       const fetchData = async () => {
         try {
-          const [users, matches, championships] = await Promise.all([
+          const [users, championships] = await Promise.all([
             getUsers(),
-            getMatches(),
             getChampionships(token),
           ]);
-          setData({ users, matches, championships });
+          setData({ users, championships });
         } catch (error) {
           console.error("Failed to fetch page data", error);
         } finally {
@@ -68,7 +66,6 @@ export default function AdminStandingsPage() {
 
       <StandingsSelector
         championships={data?.championships || []}
-        matches={data?.matches || []}
         users={data?.users || []}
       />
     </div>

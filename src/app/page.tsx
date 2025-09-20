@@ -1,6 +1,5 @@
 'use client';
-import { getMatches, getUsers, getChampionships } from '@/lib/api';
-import { calculateStandings } from '@/lib/utils';
+import { getUsers, getChampionships } from '@/lib/api';
 import { useEffect, useState } from 'react';
 import { redirect } from 'next/navigation';
 import StandingsSelector from '@/components/standings/StandingsSelector';
@@ -12,7 +11,6 @@ export default function Home() {
   const { user, token, isLoading: isAuthLoading } = useAuth();
   const [data, setData] = useState<{
     users: User[];
-    matches: Match[];
     championships: Championship[];
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,13 +22,12 @@ export default function Home() {
       } else {
         const fetchData = async () => {
           try {
-            // Pass the token to getChampionships
-            const [users, matches, championships] = await Promise.all([
+            // Fetch users (mocked) and championships (real API)
+            const [users, championships] = await Promise.all([
               getUsers(),
-              getMatches(),
               getChampionships(token),
             ]);
-            setData({ users, matches, championships });
+            setData({ users, championships });
           } catch (error) {
             console.error("Failed to fetch page data", error);
           } finally {
@@ -65,13 +62,12 @@ export default function Home() {
           Championship Standings
         </h1>
         <p className="mt-3 max-w-md mx-auto text-base text-muted-foreground sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-          Select a season and a game to see who's dominating the league.
+          Select a season to see who's dominating the league.
         </p>
       </div>
 
       <StandingsSelector
         championships={data.championships}
-        matches={data.matches}
         users={data.users}
       />
     </div>
