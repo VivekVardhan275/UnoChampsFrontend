@@ -77,14 +77,17 @@ type ApiGame = {
 };
 
 export async function getMatchesByChampionshipId(championshipId: string, token: string | null): Promise<Match[]> {
-    if (!token) {
+    const session = await getSession();
+    const authToken = token || session?.token;
+    
+    if (!authToken) {
         console.error("Authentication token is missing for getMatchesByChampionshipId.");
         return [];
     }
 
     try {
         const response = await axios.get(`${backendUrl}/api/season/games/get-games`, {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${authToken}` },
             params: { season: championshipId }
         });
 
@@ -180,14 +183,12 @@ export async function addMatchToApi(season: string, payload: AddMatchPayload, to
             payload,
             { headers: { Authorization: `Bearer ${token}` } }
         );
-        // The API returns the list of all games in the season.
-        // We might want to use this response to update our local cache of matches.
-        // For now, we'll just log success.
         return response.data;
     } catch (error) {
         const axiosError = error as AxiosError;
-        console.error('Failed to add match:', axiosError.response?.data || axiosError.message);
-        throw new Error(`API Error: ${axiosError.response?.data || axiosError.message}`);
+        const errorMessage = (axiosError.response?.data as { message?: string })?.message || axiosError.message;
+        console.error('Failed to add match:', errorMessage);
+        throw new Error(`API Error: ${errorMessage}`);
     }
 }
 
@@ -207,14 +208,33 @@ export async function deleteMatch(id: string): Promise<void> {
     return Promise.resolve();
 }
 
-export async function addChampionship(name: string): Promise<Championship> {
-    const newChampionship: Championship = {
-        id: name, // Using name as ID for consistency with GET endpoint
-        name,
-    };
-    championships.push(newChampionship);
-    return Promise.resolve(newChampionship);
+export async function addChampionshipToApi(seasonName: string, token: string): Promise<Championship[]> {
+    try {
+        const response = await axios.post(
+            `${backendUrl}/api/seasons/set-season?season=${encodeURIComponent(seasonName)}`,
+            {}, // Empty body as per API spec
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (response.data && Array.isArray(response.data)) {
+            const seasons: Championship[] = response.data.map((season: { seasonName: string }) => ({
+                id: season.seasonName,
+                name: season.seasonName,
+            }));
+            championships = seasons;
+            return seasons;
+        } else {
+             throw new Error('API response was not in the expected format.');
+        }
+
+    } catch (error) {
+        const axiosError = error as AxiosError;
+        const errorMessage = (axiosError.response?.data as { message?: string })?.message || axiosError.message;
+        console.error('Failed to add championship:', errorMessage);
+        throw new Error(`API Error: ${errorMessage}`);
+    }
 }
+
 
 export async function updateChampionship(id: string, name: string): Promise<Championship> {
     const champIndex = championships.findIndex(c => c.id === id);

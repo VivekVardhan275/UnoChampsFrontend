@@ -4,7 +4,6 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
 import { 
-    addChampionship as addChampionshipToApi,
     deleteChampionship as deleteChampionshipFromApi,
     updateChampionship as updateChampionshipInApi,
     deleteMatch as deleteMatchFromApi,
@@ -14,32 +13,16 @@ import {
 import type { User } from './definitions';
 import { getSession } from './auth';
 
-const seasonSchema = z.object({
-    name: z.string().min(3, { message: "Season name must be at least 3 characters." }),
-});
-
-export async function createSeason(prevState: any, formData: FormData) {
-    const validatedFields = seasonSchema.safeParse({
-        name: formData.get('name'),
-    });
-
-    if (!validatedFields.success) {
-        return {
-            errors: validatedFields.error.flatten().fieldErrors,
-            message: 'Invalid fields. Failed to create season.',
-        };
-    }
-
-    try {
-        await addChampionshipToApi(validatedFields.data.name);
-    } catch (error) {
-        return { message: 'Database Error: Failed to create season.' };
-    }
-    revalidatePath('/admin/seasons');
-    return { message: 'Season created successfully.' };
-}
+// This file contains server actions. 
+// For client-side API calls that need authentication, 
+// prefer using a client-side fetch to a Route Handler
+// to get the token from localStorage.
 
 export async function updateSeason(id: string, prevState: any, formData: FormData) {
+    const seasonSchema = z.object({
+        name: z.string().min(3, { message: "Season name must be at least 3 characters." }),
+    });
+
     const validatedFields = seasonSchema.safeParse({
         name: formData.get('name'),
     });
