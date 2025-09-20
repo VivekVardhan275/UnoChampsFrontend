@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -41,6 +42,10 @@ export default function MatchList({ matches, users, seasonId }: { matches: Match
         setIsDeleting(null);
     }
     
+    if (matches.length === 0) {
+        return <p className="text-muted-foreground text-center">No games to display for this season.</p>
+    }
+
     return (
         <div className="space-y-6">
         {matches.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((match) => (
