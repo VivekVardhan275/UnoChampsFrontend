@@ -2,7 +2,6 @@
 
 import axios from 'axios';
 import type { Championship, Match, User, MatchToCreate } from './definitions';
-import { findOrCreateUserByName } from './actions';
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
 
@@ -18,6 +17,23 @@ let matches: Match[] = [];
 
 let nextUserId = 100;
 let nextMatchId = 104;
+
+// This function simulates finding a user or creating one if they don't exist.
+// In a real backend, this would be a single API call. For now, it uses the mock user list.
+export async function findOrCreateUserByName(name: string): Promise<User> {
+    let user = users.find(u => u.name.toLowerCase() === name.toLowerCase());
+    if (!user) {
+         user = {
+            id: (nextUserId++).toString(),
+            name: name,
+            email: `${name.toLowerCase().replace(/\s/g, '')}@example.com`,
+            role: 'PLAYER',
+            avatarUrl: `https://picsum.photos/seed/${name}/200/200`
+        };
+        users.push(user);
+    }
+    return user;
+}
 
 
 export async function getUsers(): Promise<User[]> {
@@ -81,7 +97,9 @@ export async function getMatchesByChampionshipId(championshipId: string, token: 
         
         const transformedMatches: Match[] = await Promise.all(apiGames.map(async (game) => {
             const participants = [];
-            for (let i = 0; i < game.members.length; i++) {
+            const numMembers = game.members.length;
+            
+            for (let i = 0; i < numMembers; i++) {
                 const memberName = game.members[i];
                 const rank = parseInt(game.ranks[i], 10);
                 const points = parseInt(game.points[i], 10);
@@ -109,6 +127,7 @@ export async function getMatchesByChampionshipId(championshipId: string, token: 
             };
         }));
         
+        matches = [...matches.filter(m => m.championshipId !== championshipId), ...transformedMatches];
         return transformedMatches;
     } catch (error) {
         console.error('Failed to fetch games for season:', error);
