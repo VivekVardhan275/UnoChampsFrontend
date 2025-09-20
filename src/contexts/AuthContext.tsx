@@ -45,12 +45,13 @@ const _AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = (userData: { name: string; email: string; role: 'ADMIN' | 'PLAYER'; token: string, id?: string }) => {
+    const userId = userData.id || Math.random().toString(36).substr(2, 9);
     const sessionUser: User = {
-        id: userData.id || Math.random().toString(36).substr(2, 9), // Use real ID if available
+        id: userId,
         name: userData.name,
         email: userData.email,
         role: userData.role,
-        avatarUrl: `https://picsum.photos/seed/${userData.name}/200/200`
+        avatarUrl: `https://source.unsplash.com/200x200/?portrait,person&sig=${userId}`
     };
     
     const session = { user: sessionUser, token: userData.token };
