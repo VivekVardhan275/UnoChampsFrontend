@@ -10,10 +10,10 @@ const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080
 
 // In-memory data store for non-auth data
 let users: User[] = [
-    { id: '1', name: 'Alice', email: 'alice@example.com', role: 'PLAYER', avatarUrl: 'https://source.unsplash.com/200x200/?portrait,person&sig=1' },
-    { id: '2', name: 'Bob', email: 'bob@example.com', role: 'PLAYER', avatarUrl: 'https://source.unsplash.com/200x200/?portrait,person&sig=2' },
-    { id: '3', name: 'Charlie', email: 'charlie@example.com', role: 'PLAYER', avatarUrl: 'https://source.unsplash.com/200x200/?portrait,person&sig=3' },
-    { id: '99', name: 'Admin', email: 'admin@unostat.com', role: 'ADMIN', avatarUrl: 'https://source.unsplash.com/200x200/?portrait,person&sig=99' },
+    { id: '1', name: 'Alice', email: 'alice@example.com', role: 'PLAYER', avatarUrl: 'https://source.unsplash.com/200x200/?portrait,vibrant&sig=1' },
+    { id: '2', name: 'Bob', email: 'bob@example.com', role: 'PLAYER', avatarUrl: 'https://source.unsplash.com/200x200/?portrait,vibrant&sig=2' },
+    { id: '3', name: 'Charlie', email: 'charlie@example.com', role: 'PLAYER', avatarUrl: 'https://source.unsplash.com/200x200/?portrait,vibrant&sig=3' },
+    { id: '99', name: 'Admin', email: 'admin@unostat.com', role: 'ADMIN', avatarUrl: 'https://source.unsplash.com/200x200/?portrait,vibrant&sig=99' },
 ];
 let championships: Championship[] = [];
 let matches: Match[] = [];
@@ -31,7 +31,7 @@ export async function findOrCreateUserByName(name: string): Promise<User> {
             name: name,
             email: `${name.toLowerCase().replace(/\s/g, '')}@example.com`,
             role: 'PLAYER',
-            avatarUrl: `https://source.unsplash.com/200x200/?portrait,person&sig=${newId}`
+            avatarUrl: `https://source.unsplash.com/200x200/?portrait,vibrant&sig=${newId}`
         };
         users.push(user);
     }

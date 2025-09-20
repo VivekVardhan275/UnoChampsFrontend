@@ -51,7 +51,7 @@ const _AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         name: userData.name,
         email: userData.email,
         role: userData.role,
-        avatarUrl: `https://source.unsplash.com/200x200/?portrait,person&sig=${userId}`
+        avatarUrl: `https://source.unsplash.com/200x200/?portrait,vibrant&sig=${userId}`
     };
     
     const session = { user: sessionUser, token: userData.token };
