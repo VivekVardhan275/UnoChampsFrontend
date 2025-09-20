@@ -176,13 +176,13 @@ export async function getChampionshipById(id: string): Promise<Championship | un
     return Promise.resolve(championships.find(c => c.id === id));
 }
 
-type AddMatchPayload = {
+type AddOrUpdateMatchPayload = {
     gameName: string;
     members: string[];
     ranks: string[];
     points: string[];
 }
-export async function addMatchToApi(season: string, payload: AddMatchPayload, token: string) {
+export async function addMatchToApi(season: string, payload: AddOrUpdateMatchPayload, token: string) {
     try {
         const response = await axios.post(
             `${backendUrl}/api/season/games/set-game?season=${encodeURIComponent(season)}`,
@@ -199,14 +199,20 @@ export async function addMatchToApi(season: string, payload: AddMatchPayload, to
 }
 
 
-export async function updateMatch(id: string, data: Partial<MatchToCreate>): Promise<Match> {
-    const matchIndex = matches.findIndex(m => m.id === id);
-    if (matchIndex === -1) {
-        throw new Error("Match not found");
+export async function updateMatchInApi(season: string, payload: AddOrUpdateMatchPayload, token: string) {
+    try {
+        const response = await axios.put(
+            `${backendUrl}/api/season/games/update-game?season=${encodeURIComponent(season)}`,
+            payload,
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+        return response.data;
+    } catch (error) {
+        const axiosError = error as AxiosError;
+        const errorMessage = (axiosError.response?.data as { message?: string })?.message || axiosError.message;
+        console.error('Failed to update match:', errorMessage);
+        throw new Error(`API Error: ${errorMessage}`);
     }
-    const updatedMatch = { ...matches[matchIndex], ...data };
-    matches[matchIndex] = updatedMatch;
-    return Promise.resolve(updatedMatch);
 }
 
 export async function deleteMatch(id: string): Promise<void> {

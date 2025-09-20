@@ -19,7 +19,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Championship, Match, User } from "@/lib/definitions";
-import { getUsersByName, updateMatch as updateMatchInApi } from "@/lib/api";
+import { getUsersByName } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 
@@ -120,7 +120,7 @@ export default function MatchEntryForm({ allChampionships, match }: { allChampio
     const { formValues, calculatedParticipants } = previewData;
     
     const apiPayload = {
-      gameName: `${formValues.name} ${format(formValues.date, "dd/MM/yyyy")}`,
+      gameName: formValues.name,
       members: calculatedParticipants.map(p => p.name),
       ranks: calculatedParticipants.map(p => p.rank.toString()),
       points: calculatedParticipants.map(p => p.points.toString()),
@@ -128,9 +128,19 @@ export default function MatchEntryForm({ allChampionships, match }: { allChampio
 
     try {
       if (isEditing && match) {
-          // This is the MOCK implementation for editing
-          // It simulates a successful API call
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+          const response = await fetch(`/api/season/games/update-game?season=${encodeURIComponent(formValues.championshipId)}`, {
+              method: 'PUT',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify(apiPayload)
+          });
+          
+          if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.message || 'Failed to update match.');
+          }
 
           toast({ title: "Match updated successfully!", description: "The standings have been updated." });
           router.push(`/admin/seasons/${encodeURIComponent(formValues.championshipId)}`);
@@ -193,7 +203,7 @@ export default function MatchEntryForm({ allChampionships, match }: { allChampio
             </div>
             <Card>
                 <CardHeader>
-                    <CardTitle>{`${formValues.name} ${format(formValues.date, "dd/MM/yyyy")}`}</CardTitle>
+                    <CardTitle>{`${formValues.name}`}</CardTitle>
                     <CardDescription>
                         Playing in <strong>{championship?.name}</strong> on <strong>{format(formValues.date, "PPP")}</strong>
                     </CardDescription>
