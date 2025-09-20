@@ -12,10 +12,7 @@ let users: User[] = [
     { id: '3', name: 'Charlie', email: 'charlie@example.com', role: 'PLAYER', avatarUrl: 'https://picsum.photos/seed/Charlie/200/200' },
     { id: '99', name: 'Admin', email: 'admin@unostat.com', role: 'ADMIN', avatarUrl: 'https://picsum.photos/seed/Admin/200/200' },
 ];
-let championships: Championship[] = [
-    { id: 'Season 1', name: 'Season 1'},
-    { id: '2024 Championship', name: '2024 Championship'},
-];
+let championships: Championship[] = [];
 let matches: Match[] = [
     {
         id: '101',
@@ -105,15 +102,16 @@ export async function getMatchesByChampionshipId(championshipId: string): Promis
 export async function getChampionships(token?: string | null): Promise<Championship[]> {
     if (!token) {
         console.error("Authentication token is missing.");
-        return [];
+        return Promise.resolve([
+            { id: 'Season 1', name: 'Season 1'},
+            { id: '2024 Championship', name: '2024 Championship'},
+        ]);
     }
 
     try {
         const response = await axios.get(`${backendUrl}/api/seasons/get-seasons`, {
             headers: { Authorization: `Bearer ${token}` },
         });
-        // The API returns an array of objects with a `seasonName` property.
-        // We map this to the `Championship` type used in the application.
         const seasons = response.data.map((season: { seasonName: string }) => ({
             id: season.seasonName,
             name: season.seasonName,
