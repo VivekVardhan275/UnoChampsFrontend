@@ -7,7 +7,7 @@ export default function LoginPage() {
   return (
     <div className="flex items-start justify-center">
       <div className="w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-6">Login to UNOstat</h1>
+        <h1 className="text-3xl font-bold text-center mb-6">Login to Uno Champs</h1>
         <p className="text-center text-muted-foreground mb-6">Don't have an account? You can register after attempting to log in.</p>
         <Tabs defaultValue="player" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
