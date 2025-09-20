@@ -10,19 +10,15 @@ export function cn(...inputs: ClassValue[]) {
 export function calculateStandings(matches: Match[], users: User[], championshipId?: string): Standing[] {
   const playerStats: { [key: string]: { totalPoints: number; gamesPlayed: number; finishes: { [key: number]: number } } } = {};
 
-  // If a championshipId is provided, filter matches by that championship.
-  const filteredMatches = championshipId ? matches.filter(m => m.championshipId === championshipId) : matches;
-
+  const filteredMatches = matches;
+  
   const relevantUserIds = new Set<string>();
   filteredMatches.forEach(match => {
     match.participants.forEach(p => relevantUserIds.add(p.userId));
   });
 
-  // Instead of filtering the passed-in 'users', get the user objects that correspond to the participants
-  // in the filtered matches. This is crucial for single-game views and ensures all players are included.
   const relevantUsers = users.filter(u => relevantUserIds.has(u.id));
 
-  // Initialize stats for only the players who are in the relevant matches.
   relevantUsers.forEach(user => {
     playerStats[user.id] = {
       totalPoints: 0,
@@ -31,10 +27,8 @@ export function calculateStandings(matches: Match[], users: User[], championship
     };
   });
 
-  // Tally stats from the filtered matches.
   filteredMatches.forEach(match => {
     match.participants.forEach(participant => {
-      // Only process participants who are in our list of relevant users.
       if (playerStats[participant.userId]) {
         playerStats[participant.userId].totalPoints += participant.points;
         playerStats[participant.userId].gamesPlayed += 1;
@@ -48,7 +42,6 @@ export function calculateStandings(matches: Match[], users: User[], championship
   let standings: Omit<Standing, 'rank'>[] = relevantUsers
     .map(user => {
         const stats = playerStats[user.id];
-        // Only include players who have actually played a game in the selection.
         if (!stats || stats.gamesPlayed === 0) return null;
 
         return {
@@ -69,12 +62,10 @@ export function calculateStandings(matches: Match[], users: User[], championship
   const maxRank = Math.max(...filteredMatches.flatMap(m => m.participants.map(p => p.rank)), 0);
 
   standings.sort((a, b) => {
-    // 1. Sort by total points (descending)
     if (b.totalPoints !== a.totalPoints) {
       return b.totalPoints - a.totalPoints;
     }
 
-    // 2. Tie-breaker: "countback"
     for (let i = 1; i <= maxRank; i++) {
       const aFinishes = a.finishMap[i] || 0;
       const bFinishes = b.finishMap[i] || 0;
