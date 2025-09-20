@@ -1,21 +1,83 @@
+'use client';
+
 import { getChampionshipById, getMatchesByChampionshipId, getUsers } from "@/lib/api";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Settings } from "lucide-react";
 import MatchList from "@/components/admin/MatchList";
+import { useEffect, useState } from "react";
+import { Championship, Match, User } from "@/lib/definitions";
+import { useAuth } from "@/contexts/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export default async function SeasonDetailsPage({ params }: { params: { id: string } }) {
-    const season = await getChampionshipById(params.id);
-    if (!season) {
-        notFound();
+export default function SeasonDetailsPage() {
+    const params = useParams<{ id: string }>();
+    const { token, isLoading: isAuthLoading } = useAuth();
+    const [season, setSeason] = useState<Championship | null>(null);
+    const [matches, setMatches] = useState<Match[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        if (!isAuthLoading && token && params.id) {
+            const fetchData = async () => {
+                try {
+                    const [seasonData, matchesData, usersData] = await Promise.all([
+                        getChampionshipById(params.id),
+                        getMatchesByChampionshipId(params.id, token),
+                        getUsers()
+                    ]);
+                    
+                    if (!seasonData) {
+                        notFound();
+                        return;
+                    }
+                    
+                    setSeason(seasonData);
+                    setMatches(matchesData);
+                    setUsers(usersData);
+                } catch (error) {
+                    console.error("Failed to fetch season details", error);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+            fetchData();
+        } else if (!isAuthLoading) {
+             setIsLoading(false);
+        }
+    }, [params.id, token, isAuthLoading]);
+
+    if (isLoading || isAuthLoading || !season) {
+        return (
+            <div className="space-y-6">
+                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                    <div className="flex items-center gap-4">
+                        <Skeleton className="h-10 w-10" />
+                        <div>
+                            <Skeleton className="h-9 w-48 mb-2" />
+                            <Skeleton className="h-5 w-64" />
+                        </div>
+                    </div>
+                    <Skeleton className="h-10 w-40" />
+                </div>
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-7 w-40 mb-2" />
+                        <Skeleton className="h-5 w-72" />
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                       <div className="space-y-4">
+                           <Skeleton className="h-24 w-full" />
+                           <Skeleton className="h-24 w-full" />
+                       </div>
+                    </CardContent>
+                </Card>
+            </div>
+        );
     }
-    
-    const [matches, users] = await Promise.all([
-      getMatchesByChampionshipId(params.id),
-      getUsers()
-    ]);
     
     return (
         <div className="space-y-6">
