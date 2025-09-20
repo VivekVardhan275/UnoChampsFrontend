@@ -1,20 +1,31 @@
+
 import MatchEntryForm from "@/components/admin/MatchEntryForm";
-import { getChampionships, getMatchById } from "@/lib/api";
-import { notFound } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import Link from 'next/link';
 import { Button } from "@/components/ui/button";
+import { Championship, Match, User } from "@/lib/definitions";
 import { ArrowLeft } from "lucide-react";
+import Link from 'next/link';
 
-export default async function EditMatchPage({ params }: { params: { id: string, matchId: string } }) {
-    const [championships, match] = await Promise.all([
-        getChampionships(),
-        getMatchById(decodeURIComponent(params.matchId))
-    ]);
+export default function EditMatchPage({ params }: { params: { id: string, matchId: string } }) {
+    // This is a mock implementation for prototyping purposes.
+    
+    const mockChampionships: Championship[] = [
+        { id: decodeURIComponent(params.id), name: decodeURIComponent(params.id) },
+        { id: 'Summer Season 2024', name: 'Summer Season 2024' },
+    ];
 
-    if (!match) {
-        notFound();
-    }
+    const mockUser1: User = { id: '1', name: 'Alice', email: 'alice@example.com', role: 'PLAYER', avatarUrl: 'https://picsum.photos/seed/Alice/200/200' };
+    const mockUser2: User = { id: '2', name: 'Bob', email: 'bob@example.com', role: 'PLAYER', avatarUrl: 'https://picsum.photos/seed/Bob/200/200' };
+
+    const mockMatch: Match & { participants: ({ user: User } & Match['participants'][0])[]} = {
+        id: decodeURIComponent(params.matchId),
+        name: "Game #1",
+        championshipId: decodeURIComponent(params.id),
+        date: new Date().toISOString(),
+        participants: [
+            { userId: '1', rank: 1, points: 10, user: mockUser1 },
+            { userId: '2', rank: 2, points: 0, user: mockUser2 },
+        ]
+    };
     
     return (
         <div className="space-y-6">
@@ -25,11 +36,11 @@ export default async function EditMatchPage({ params }: { params: { id: string, 
                     </Link>
                 </Button>
                 <div>
-                    <h1 className="text-3xl font-bold">Edit Match: {match.name}</h1>
+                    <h1 className="text-3xl font-bold">Edit Match: {mockMatch.name}</h1>
                     <p className="text-muted-foreground">Update the participants and ranks for this game.</p>
                 </div>
             </div>
-            <MatchEntryForm allChampionships={championships} match={match} />
+            <MatchEntryForm allChampionships={mockChampionships} match={mockMatch} />
         </div>
     )
 }
