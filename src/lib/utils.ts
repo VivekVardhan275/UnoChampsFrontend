@@ -10,8 +10,9 @@ export function cn(...inputs: ClassValue[]) {
 export function calculateStandings(matches: Match[], users: User[], championshipId?: string): Standing[] {
   const playerStats: { [key: string]: { totalPoints: number; gamesPlayed: number; finishes: { [key: number]: number } } } = {};
 
-  // If a championshipId is provided, filter matches by it. Otherwise, use all provided matches.
-  const filteredMatches = championshipId ? matches.filter(m => m.championshipId === championshipId) : matches;
+  // If a championshipId is provided AND we're looking at more than one match, filter by championship.
+  // If we only have one match, we assume we're in a single-game view and don't need to filter.
+  const filteredMatches = (championshipId && matches.length > 1) ? matches.filter(m => m.championshipId === championshipId) : matches;
 
   const relevantUserIds = new Set<string>();
   filteredMatches.forEach(match => {
