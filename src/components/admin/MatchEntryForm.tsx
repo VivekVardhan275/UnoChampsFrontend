@@ -79,7 +79,7 @@ export default function MatchEntryForm({ allChampionships, match }: { allChampio
 
         form.reset({
           championshipId: match.championshipId,
-          name: match.name.replace(/ \d{2}\/\d{2}\/\d{4}$/, '').trim(),
+          name: match.name,
           date: new Date(match.date),
           multiplier: 10, 
           participants: match.participants.sort((a,b) => a.rank - b.rank).map(p => ({
@@ -119,8 +119,9 @@ export default function MatchEntryForm({ allChampionships, match }: { allChampio
 
     const { formValues, calculatedParticipants } = previewData;
     
-    const formattedDate = format(formValues.date, "dd/MM/yyyy");
-    const gameNameWithDate = isEditing && match ? match.name : `${formValues.name} ${formattedDate}`;
+    const gameNameWithDate = isEditing && match 
+      ? match.name 
+      : `${formValues.name} ${format(formValues.date, "dd/MM/yyyy")}`;
 
     const apiPayload = {
       gameName: gameNameWithDate,
