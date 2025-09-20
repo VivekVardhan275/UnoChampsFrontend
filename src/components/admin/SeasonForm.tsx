@@ -5,7 +5,7 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
-import { addChampionshipToApi, updateChampionship as updateChampionshipInApi } from '@/lib/api';
+import { addChampionshipToApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -54,27 +54,33 @@ export default function SeasonForm({ season }: { season?: Championship }) {
 
         try {
             if (isEditing && season) {
-                // This is a mock action for now.
-                console.log(`Renaming season ${season.id} to ${data.name}`);
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+                const response = await fetch(`/api/seasons/update-season?current-season=${encodeURIComponent(season.name)}&new-season=${encodeURIComponent(data.name)}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to rename season.');
+                }
                 
                  toast({
                     title: "Success",
                     description: `Season renamed to "${data.name}".`,
                 });
-                // In a real app, you'd likely redirect or refresh.
-                // For the mock, we'll just refresh to show it could work.
-                router.refresh(); 
+
                 router.push('/admin/seasons');
+                router.refresh();
             } else {
-                // Use the new client-side API call for creation.
                 await addChampionshipToApi(data.name, token);
                 toast({
                     title: "Success",
                     description: "Season created successfully.",
                 });
-                reset({ name: '' }); // Reset form on successful creation
-                router.refresh(); // Refresh the page to show the new season
+                reset({ name: '' });
+                router.refresh(); 
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
@@ -114,8 +120,8 @@ export default function SeasonForm({ season }: { season?: Championship }) {
             
             <Button type="submit" className="w-full" disabled={isSubmitting}>
                {isSubmitting 
-                    ? <><Loader2 className="animate-spin" /> {isEditing ? 'Renaming...' : 'Creating...'}</>
-                    : (isEditing ? <><PenSquare/> Rename Season</> : <><PlusCircle/> Create Season</>)
+                    ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {isEditing ? 'Renaming...' : 'Creating...'}</>
+                    : (isEditing ? <><PenSquare className="mr-2 h-4 w-4" /> Rename Season</> : <><PlusCircle className="mr-2 h-4 w-4" /> Create Season</>)
                }
             </Button>
         </form>

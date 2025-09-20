@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 
 import { 
     deleteChampionship as deleteChampionshipFromApi,
-    updateChampionship as updateChampionshipInApi,
+    updateChampionshipInApi,
     deleteMatch as deleteMatchFromApi,
     updateMatch as updateMatchInApi,
     getUsers,

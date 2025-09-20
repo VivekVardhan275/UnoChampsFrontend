@@ -242,15 +242,39 @@ export async function addChampionshipToApi(seasonName: string, token: string): P
 }
 
 
-export async function updateChampionship(id: string, name: string): Promise<Championship> {
-    const champIndex = championships.findIndex(c => c.id === id);
-    if (champIndex === -1) {
-        throw new Error("Championship not found.");
+export async function updateChampionshipInApi(currentSeason: string, newSeason: string, token: string): Promise<Championship[]> {
+    try {
+        const response = await axios.put(
+            `${backendUrl}/api/seasons/update-season`,
+            {},
+            { 
+                params: {
+                    'current-season': currentSeason,
+                    'new-season': newSeason
+                },
+                headers: { Authorization: `Bearer ${token}` } 
+            }
+        );
+
+        if (response.data && Array.isArray(response.data)) {
+            const seasons: Championship[] = response.data.map((season: { seasonName: string }) => ({
+                id: season.seasonName,
+                name: season.seasonName,
+            }));
+            championships = seasons; // Update mock data
+            return seasons;
+        } else {
+            throw new Error('API response for updating season was not in the expected format.');
+        }
+
+    } catch (error) {
+        const axiosError = error as AxiosError;
+        const errorMessage = (axiosError.response?.data as { message?: string })?.message || axiosError.message;
+        console.error('Failed to update championship:', errorMessage);
+        throw new Error(`API Error: ${errorMessage}`);
     }
-    championships[champIndex].name = name;
-    championships[champIndex].id = name;
-    return Promise.resolve(championships[champIndex]);
 }
+
 
 export async function deleteChampionship(id: string): Promise<void> {
     if (matches.some(m => m.championshipId === id)) {
