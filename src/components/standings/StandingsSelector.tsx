@@ -146,6 +146,7 @@ export default function StandingsSelector({
           <StandingsTable 
             initialStandings={standings} 
             isSeasonStandings={selectedMatch === 'all'} 
+            seasonId={selectedChampionship}
           />
         </CardContent>
       </Card>

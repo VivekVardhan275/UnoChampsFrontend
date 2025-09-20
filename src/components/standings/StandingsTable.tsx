@@ -42,7 +42,7 @@ const SortableHeader = ({
   );
 };
 
-export default function StandingsTable({ initialStandings, isSeasonStandings = false }: { initialStandings: Standing[], isSeasonStandings?: boolean }) {
+export default function StandingsTable({ initialStandings, isSeasonStandings = false, seasonId }: { initialStandings: Standing[], isSeasonStandings?: boolean, seasonId?: string }) {
   const [sortConfig, setSortConfig] = useState<{
     key: SortKey;
     direction: 'ascending' | 'descending';
@@ -127,7 +127,7 @@ export default function StandingsTable({ initialStandings, isSeasonStandings = f
             <TableRow key={standing.player.id}>
               <TableCell className="font-medium text-lg text-center">{standing.rank}</TableCell>
               <TableCell>
-                <Link href={`/players/${standing.player.id}`} className="flex items-center gap-3 group">
+                <Link href={`/players/${standing.player.id}${seasonId ? `?season=${encodeURIComponent(seasonId)}` : ''}`} className="flex items-center gap-3 group">
                   <Avatar>
                     <AvatarImage src={standing.player.avatarUrl} data-ai-hint="person portrait" />
                     <AvatarFallback>{standing.player.name.charAt(0)}</AvatarFallback>
