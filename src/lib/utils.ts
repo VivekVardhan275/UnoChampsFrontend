@@ -10,9 +10,14 @@ export function cn(...inputs: ClassValue[]) {
 export function calculateStandings(matches: Match[], users: User[], championshipId?: string): Standing[] {
   const playerStats: { [key: string]: { totalPoints: number; gamesPlayed: number; finishes: { [key: number]: number } } } = {};
 
-  const relevantUsers = championshipId 
-    ? users.filter(u => matches.some(m => m.championshipId === championshipId && m.participants.some(p => p.userId === u.id)))
-    : users;
+  const filteredMatches = championshipId ? matches.filter(m => m.championshipId === championshipId) : matches;
+
+  const relevantUserIds = new Set<string>();
+  filteredMatches.forEach(match => {
+    match.participants.forEach(p => relevantUserIds.add(p.userId));
+  });
+
+  const relevantUsers = users.filter(u => relevantUserIds.has(u.id));
 
   relevantUsers.forEach(user => {
     playerStats[user.id] = {
@@ -21,8 +26,6 @@ export function calculateStandings(matches: Match[], users: User[], championship
       finishes: {},
     };
   });
-
-  const filteredMatches = championshipId ? matches.filter(m => m.championshipId === championshipId) : matches;
 
   filteredMatches.forEach(match => {
     match.participants.forEach(participant => {
