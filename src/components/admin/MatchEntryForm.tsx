@@ -292,6 +292,7 @@ export default function MatchEntryForm({ allChampionships, match }: { allChampio
                                         "w-full justify-start pl-3 text-left font-normal",
                                         !field.value && "text-muted-foreground"
                                     )}
+                                    disabled={isEditing}
                                     >
                                     {field.value ? (
                                         format(field.value, "PPP")
