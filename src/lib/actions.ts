@@ -18,6 +18,7 @@ const matchSchema = z.object({
     championshipId: z.string().min(1, 'Season is required.'),
     name: z.string().min(1, 'Game name is required.'),
     date: z.date({ required_error: 'A date for the match is required.' }),
+    multiplier: z.coerce.number().min(1, "Multiplier must be at least 1."),
     participants: z.array(z.object({
         name: z.string().min(1, "Player name is required."),
         rank: z.coerce.number().min(1, "Rank is required"),
@@ -150,6 +151,7 @@ export async function updateSeason(id: string, prevState: any, formData: FormDat
     revalidatePath('/admin/seasons');
     revalidatePath(`/admin/seasons/${id}`);
     revalidatePath(`/admin/seasons/${id}/settings`);
+    return { message: 'Season updated successfully.' };
 }
 
 export async function deleteSeason(id: string) {

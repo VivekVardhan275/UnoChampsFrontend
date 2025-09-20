@@ -1,143 +1,122 @@
 'use server';
 
 import type { Championship, Match, User, MatchToCreate } from './definitions';
-import { getSession } from './auth';
-import axios from 'axios';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
-const axiosInstance = axios.create({
-    baseURL: BASE_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
-
-axiosInstance.interceptors.request.use(
-    async (config) => {
-        // This is a server-side interceptor. It will only work in server components/actions
-        // For client-side requests, the token needs to be added there.
-        // We will adapt this once we see where it's called from.
-        const session = await getSession();
-        if (session?.token) {
-            config.headers.Authorization = `Bearer ${session.token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
-
-
-async function fetcher(endpoint: string, options: RequestInit = {}): Promise<any> {
-    const url = `${BASE_URL}${endpoint}`;
-    
-    // We are switching to client-side auth, so server-side token fetching needs adjustment.
-    // Let's rely on the components to provide the token for now where needed.
-    // For server components, this will become an issue if they need auth.
-
-    const headers = {
-        'Content-Type': 'application/json',
-        ...options.headers,
-    };
-    
-    const session = await getSession(); // This will only work on the server
-    if (session?.token) {
-        headers['Authorization'] = `Bearer ${session.token}`;
-    }
-
-    try {
-        const response = await fetch(url, { ...options, headers });
-        if (!response.ok) {
-            const errorBody = await response.text();
-            console.error(`API Error on ${endpoint}: ${response.status} ${response.statusText}`, errorBody);
-            throw new Error(`Failed to fetch ${endpoint}: ${response.statusText}`);
-        }
-        const text = await response.text();
-        return text ? JSON.parse(text) : null;
-
-    } catch (error) {
-        console.error(`Network or fetch error for endpoint ${endpoint}:`, error);
-        throw new Error(`Network error when fetching ${endpoint}.`);
-    }
-}
+// In-memory data store
+let users: User[] = [
+    { id: '1', name: 'Alice', email: 'alice@example.com', role: 'PLAYER', avatarUrl: 'https://picsum.photos/seed/Alice/200/200' },
+    { id: '2', name: 'Bob', email: 'bob@example.com', role: 'PLAYER', avatarUrl: 'https://picsum.photos/seed/Bob/200/200' },
+    { id: '3', name: 'Charlie', email: 'charlie@example.com', role_of_user: 'PLAYER', avatarUrl: 'https://picsum.photos/seed/Charlie/200/200' },
+    { id: '99', name: 'Admin', email: 'admin@unostat.com', role: 'ADMIN', avatarUrl: 'https://picsum.photos/seed/Admin/200/200' },
+];
+let matches: Match[] = [];
+let championships: Championship[] = [
+    { id: '1', name: 'Season 1'},
+    { id: '2', name: '2024 Championship'},
+];
+let nextUserId = 4;
+let nextMatchId = 1;
+let nextChampionshipId = 3;
 
 
 export async function getUsers(): Promise<User[]> {
-  return fetcher('/api/players');
+  return Promise.resolve(users);
 }
 
 export async function getUserById(id: string): Promise<User | undefined> {
-  return fetcher(`/api/players/${id}`);
+  return Promise.resolve(users.find(u => u.id === id));
 }
 
 export async function getMatches(): Promise<Match[]> {
-  return fetcher('/api/matches');
+  return Promise.resolve(matches);
 }
 
 export async function getMatchById(id: string): Promise<Match | undefined> {
-    return fetcher(`/api/matches/${id}`);
+    return Promise.resolve(matches.find(m => m.id === id));
 }
 
 export async function getMatchesByUserId(userId: string): Promise<Match[]> {
-    return fetcher(`/api/matches/player/${userId}`);
+    return Promise.resolve(matches.filter(m => m.participants.some(p => p.userId === userId)));
 }
 
 export async function getMatchesByChampionshipId(championshipId: string): Promise<Match[]> {
-    return fetcher(`/api/matches/championship/${championshipId}`);
+    return Promise.resolve(matches.filter(m => m.championshipId === championshipId));
 }
 
 export async function getChampionships(): Promise<Championship[]> {
-  return fetcher('/api/championships');
+  return Promise.resolve(championships);
 }
 
 export async function getChampionshipById(id: string): Promise<Championship | undefined> {
-    return fetcher(`/api/championships/${id}`);
+    return Promise.resolve(championships.find(c => c.id === id));
 }
 
 export async function addMatch(match: MatchToCreate): Promise<Match> {
-    return fetcher('/api/matches', {
-        method: 'POST',
-        body: JSON.stringify(match)
-    });
+    const newMatch: Match = {
+        ...match,
+        id: (nextMatchId++).toString(),
+    };
+    matches.push(newMatch);
+    return Promise.resolve(newMatch);
 }
 
 export async function updateMatch(id: string, data: Partial<MatchToCreate>): Promise<Match> {
-    return fetcher(`/api/matches/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data)
-    });
+    const matchIndex = matches.findIndex(m => m.id === id);
+    if (matchIndex === -1) {
+        throw new Error("Match not found");
+    }
+    const updatedMatch = { ...matches[matchIndex], ...data };
+    matches[matchIndex] = updatedMatch;
+    return Promise.resolve(updatedMatch);
 }
 
 export async function deleteMatch(id: string): Promise<void> {
-    return fetcher(`/api/matches/${id}`, { method: 'DELETE' });
+    matches = matches.filter(m => m.id !== id);
+    return Promise.resolve();
 }
 
 export async function addChampionship(name: string): Promise<Championship> {
-    return fetcher('/api/championships', {
-        method: 'POST',
-        body: JSON.stringify({ name })
-    });
+    const newChampionship: Championship = {
+        id: (nextChampionshipId++).toString(),
+        name,
+    };
+    championships.push(newChampionship);
+    return Promise.resolve(newChampionship);
 }
 
 export async function updateChampionship(id: string, name: string): Promise<Championship> {
-    return fetcher(`/api/championships/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ name })
-    });
+    const champIndex = championships.findIndex(c => c.id === id);
+    if (champIndex === -1) {
+        throw new Error("Championship not found.");
+    }
+    championships[champIndex].name = name;
+    return Promise.resolve(championships[champIndex]);
 }
 
 export async function deleteChampionship(id: string): Promise<void> {
-    return fetcher(`/api/championships/${id}`, { method: 'DELETE' });
+    if (matches.some(m => m.championshipId === id)) {
+        throw new Error("Cannot delete a season with matches associated with it.");
+    }
+    championships = championships.filter(c => c.id !== id);
+    return Promise.resolve();
 }
 
 export async function findOrCreateUserByName(name: string): Promise<User> {
-    return fetcher('/api/users', { method: 'POST', body: JSON.stringify({ name }) });
+    let user = users.find(u => u.name.toLowerCase() === name.toLowerCase());
+    if (!user) {
+        user = {
+            id: (nextUserId++).toString(),
+            name: name,
+            email: `${name.toLowerCase().replace(/\s/g, '')}@example.com`,
+            role: 'PLAYER',
+            avatarUrl: `https://picsum.photos/seed/${name}/200/200`
+        };
+        users.push(user);
+    }
+    return Promise.resolve(user);
 }
 
 export async function getUsersByName(names: string[]): Promise<User[]> {
-    const query = new URLSearchParams(names.map(n => ['name', n])).toString();
-    return fetcher(`/api/users/by-names?${query}`);
+    const lowercasedNames = names.map(n => n.toLowerCase());
+    return Promise.resolve(users.filter(u => lowercasedNames.includes(u.name.toLowerCase())));
 }
-
