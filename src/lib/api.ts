@@ -96,20 +96,25 @@ export async function getMatchesByChampionshipId(championshipId: string, token: 
         const apiGames: ApiGame[] = response.data;
         
         const transformedMatches: Match[] = await Promise.all(apiGames.map(async (game) => {
-            const participants = [];
-            const numMembers = game.members.length;
-            
-            for (let i = 0; i < numMembers; i++) {
-                const memberName = game.members[i];
-                const rank = parseInt(game.ranks[i], 10);
-                const points = parseInt(game.points[i], 10);
-                const user = await findOrCreateUserByName(memberName);
-                participants.push({
-                    userId: user.id,
-                    rank: rank,
-                    points: points,
+            const memberCount = game.members.length;
+            const participantsData: { name: string, rank: number, points: number }[] = [];
+
+            for (let i = 0; i < memberCount; i++) {
+                participantsData.push({
+                    name: game.members[i],
+                    rank: parseInt(game.ranks[i], 10),
+                    points: parseInt(game.points[i], 10)
                 });
             }
+
+            const participants = await Promise.all(participantsData.map(async (p) => {
+                const user = await findOrCreateUserByName(p.name);
+                return {
+                    userId: user.id,
+                    rank: p.rank,
+                    points: p.points,
+                };
+            }));
             
             const dateMatch = game.gameName.match(/(\d{2}\/\d{2}\/\d{4})/);
             let date = new Date();
