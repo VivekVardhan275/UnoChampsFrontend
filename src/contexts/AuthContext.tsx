@@ -3,6 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { User } from '@/lib/definitions';
+import { Skeleton } from '@/components/ui/skeleton';
+import dynamic from 'next/dynamic';
 
 const LOCAL_STORAGE_KEY = 'unostat_session';
 
@@ -20,7 +22,7 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+const _AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,6 +73,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+export const AuthProvider = dynamic(() => Promise.resolve(_AuthProvider), {
+    ssr: false,
+    loading: () => (
+         <div className="flex flex-col min-h-screen">
+            <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <div className="container flex h-14 items-center justify-between">
+                    <Skeleton className="h-8 w-32" />
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                </div>
+            </header>
+            <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                 <div className="space-y-8">
+                    <div className="text-center">
+                        <Skeleton className="h-12 w-3/4 mx-auto mb-4" />
+                        <Skeleton className="h-6 w-1/2 mx-auto" />
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <Skeleton className="h-10 w-full sm:w-[280px]" />
+                        <Skeleton className="h-10 w-full sm:w-[280px]" />
+                    </div>
+                    <Skeleton className="h-96 w-full" />
+                </div>
+            </main>
+        </div>
+    )
+});
+
 
 export const useAuth = () => {
   const context = useContext(AuthContext);

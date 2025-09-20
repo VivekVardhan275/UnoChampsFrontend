@@ -29,32 +29,40 @@ export function calculateStandings(matches: Match[], users: User[], championship
 
   filteredMatches.forEach(match => {
     match.participants.forEach(participant => {
-      if (playerStats[participant.userId]) {
-        playerStats[participant.userId].totalPoints += participant.points;
-        playerStats[participant.userId].gamesPlayed += 1;
-        
-        const rank = participant.rank;
-        playerStats[participant.userId].finishes[rank] = (playerStats[participant.userId].finishes[rank] || 0) + 1;
+      // Ensure the stats object exists before trying to update it.
+      // This handles cases where a user from a match might not be in the initial `relevantUsers` list,
+      // though the above logic should prevent this. It's a safe-guard.
+      if (!playerStats[participant.userId]) {
+         playerStats[participant.userId] = { totalPoints: 0, gamesPlayed: 0, finishes: {} };
       }
+      playerStats[participant.userId].totalPoints += participant.points;
+      playerStats[participant.userId].gamesPlayed += 1;
+      
+      const rank = participant.rank;
+      playerStats[participant.userId].finishes[rank] = (playerStats[participant.userId].finishes[rank] || 0) + 1;
     });
   });
 
-  let standings: Omit<Standing, 'rank'>[] = relevantUsers
-    .filter(user => playerStats[user.id] && playerStats[user.id].gamesPlayed > 0)
-    .map(user => {
-      const stats = playerStats[user.id];
-      return {
-        player: user,
-        totalPoints: stats.totalPoints,
-        gamesPlayed: stats.gamesPlayed,
-        finishes: {
-          first: stats.finishes[1] || 0,
-          second: stats.finishes[2] || 0,
-          third: stats.finishes[3] || 0,
-        },
-        finishMap: stats.finishes,
-      };
-    });
+  let standings: Omit<Standing, 'rank'>[] = Object.keys(playerStats)
+    .map(userId => {
+        const user = users.find(u => u.id === userId);
+        if (!user || playerStats[userId].gamesPlayed === 0) return null;
+
+        const stats = playerStats[userId];
+        return {
+            player: user,
+            totalPoints: stats.totalPoints,
+            gamesPlayed: stats.gamesPlayed,
+            finishes: {
+                first: stats.finishes[1] || 0,
+                second: stats.finishes[2] || 0,
+                third: stats.finishes[3] || 0,
+            },
+            finishMap: stats.finishes,
+        };
+    })
+    .filter((s): s is Omit<Standing, 'rank'> => s !== null);
+
 
   const maxRank = Math.max(...filteredMatches.flatMap(m => m.participants.map(p => p.rank)), 0);
 
