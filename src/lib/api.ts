@@ -96,18 +96,14 @@ export async function getMatchesByChampionshipId(championshipId: string, token: 
         const apiGames: ApiGame[] = response.data;
         
         const transformedMatches: Match[] = await Promise.all(apiGames.map(async (game) => {
-            const memberCount = game.members.length;
-            const participantsData: { name: string, rank: number, points: number }[] = [];
+            
+            const memberStats = game.members.map((member, index) => ({
+                name: member,
+                rank: parseInt(game.ranks[index], 10),
+                points: parseInt(game.points[index], 10)
+            }));
 
-            for (let i = 0; i < memberCount; i++) {
-                participantsData.push({
-                    name: game.members[i],
-                    rank: parseInt(game.ranks[i], 10),
-                    points: parseInt(game.points[i], 10)
-                });
-            }
-
-            const participants = await Promise.all(participantsData.map(async (p) => {
+            const participants = await Promise.all(memberStats.map(async (p) => {
                 const user = await findOrCreateUserByName(p.name);
                 return {
                     userId: user.id,
