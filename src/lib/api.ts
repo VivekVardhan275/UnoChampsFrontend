@@ -276,12 +276,35 @@ export async function updateChampionshipInApi(currentSeason: string, newSeason: 
 }
 
 
-export async function deleteChampionship(id: string): Promise<void> {
-    if (matches.some(m => m.championshipId === id)) {
-        throw new Error("Cannot delete a season with matches associated with it.");
+export async function deleteChampionshipFromApi(seasonName: string, token: string): Promise<Championship[]> {
+    try {
+        const response = await axios.delete(
+            `${backendUrl}/api/seasons/delete-season`,
+            { 
+                params: {
+                    season: seasonName
+                },
+                headers: { Authorization: `Bearer ${token}` } 
+            }
+        );
+
+        if (response.data && Array.isArray(response.data)) {
+            const seasons: Championship[] = response.data.map((season: { seasonName: string }) => ({
+                id: season.seasonName,
+                name: season.seasonName,
+            }));
+            championships = seasons; // Update mock data
+            return seasons;
+        } else {
+            throw new Error('API response for deleting season was not in the expected format.');
+        }
+
+    } catch (error) {
+        const axiosError = error as AxiosError;
+        const errorMessage = (axiosError.response?.data as { message?: string })?.message || axiosError.message;
+        console.error('Failed to delete championship:', errorMessage);
+        throw new Error(`API Error: ${errorMessage}`);
     }
-    championships = championships.filter(c => c.id !== id);
-    return Promise.resolve();
 }
 
 export async function getUsersByName(names: string[]): Promise<User[]> {

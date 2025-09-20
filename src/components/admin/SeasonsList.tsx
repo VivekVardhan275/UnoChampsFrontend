@@ -16,24 +16,56 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { deleteSeason } from "@/lib/actions";
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function SeasonsList({ seasons }: { seasons: Championship[] }) {
     const { toast } = useToast();
+    const { token } = useAuth();
+    const router = useRouter();
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
     const handleDelete = async (id: string) => {
-        setIsDeleting(id);
-        const result = await deleteSeason(id);
-        if (result?.message) {
-             toast({
-                title: result.message.includes("Error") ? "Error" : "Success",
-                description: result.message,
-                variant: result.message.includes("Error") ? "destructive" : "default",
+        if (!token) {
+            toast({
+                title: "Error",
+                description: "Authentication token not found.",
+                variant: "destructive",
             });
+            return;
         }
-        setIsDeleting(null);
+
+        setIsDeleting(id);
+        try {
+            const response = await fetch(`/api/seasons/delete-season?season=${encodeURIComponent(id)}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to delete season.');
+            }
+
+            toast({
+                title: "Success",
+                description: "Season deleted successfully.",
+            });
+            router.refresh();
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+            toast({
+                title: "Error",
+                description: errorMessage,
+                variant: "destructive",
+            });
+        } finally {
+            setIsDeleting(null);
+        }
     }
     
     if (seasons.length === 0) {
