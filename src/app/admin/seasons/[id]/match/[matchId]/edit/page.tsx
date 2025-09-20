@@ -9,7 +9,7 @@ import { ArrowLeft } from "lucide-react";
 export default async function EditMatchPage({ params }: { params: { id: string, matchId: string } }) {
     const [championships, match] = await Promise.all([
         getChampionships(),
-        getMatchById(params.matchId)
+        getMatchById(decodeURIComponent(params.matchId))
     ]);
 
     if (!match) {

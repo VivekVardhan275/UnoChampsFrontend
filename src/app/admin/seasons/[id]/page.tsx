@@ -20,7 +20,7 @@ export default function SeasonDetailsPage() {
     const [isLoading, setIsLoading] = useState(true);
 
     const decodedId = params.id ? decodeURIComponent(params.id) : null;
-    const seasonName = decodedId; // The decoded ID is the season name
+    const seasonName = decodedId; 
 
     useEffect(() => {
         if (!isAuthLoading && token && decodedId) {
@@ -110,7 +110,7 @@ export default function SeasonDetailsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                   <MatchList matches={matches} users={users} seasonId={params.id as string} />
+                   <MatchList matches={matches} users={users} seasonId={seasonName} />
                 </CardContent>
             </Card>
         </div>
