@@ -57,7 +57,7 @@ export default function MatchList({ matches, users, seasonId }: { matches: Match
                     </div>
                      <div className="flex items-center gap-2">
                         <Button variant="secondary" asChild>
-                            <Link href={`/admin/seasons/${seasonId}/match/${match.id}/edit`}>
+                            <Link href={`/admin/seasons/${encodeURIComponent(seasonId)}/match/${match.id}/edit`}>
                                 <Pen className="mr-2 h-4 w-4"/>
                                 Edit Game
                             </Link>

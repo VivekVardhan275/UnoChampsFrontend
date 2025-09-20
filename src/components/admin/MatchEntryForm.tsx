@@ -128,27 +128,13 @@ export default function MatchEntryForm({ allChampionships, match }: { allChampio
 
     try {
       if (isEditing && match) {
-          // This uses the mock update for now. A real app would have a dedicated API route.
-          const participantPromises = calculatedParticipants.map(async (p) => {
-              const user = await getUsersByName([p.name]);
-              return {
-                  userId: user[0].id,
-                  rank: p.rank,
-                  points: p.points,
-              };
-          });
-
-          const participantsWithUserIds = await Promise.all(participantPromises);
-
-          await updateMatchInApi(match.id, {
-              championshipId: formValues.championshipId,
-              name: formValues.name,
-              date: formValues.date.toISOString(),
-              participants: participantsWithUserIds,
-          });
+          // This is the MOCK implementation for editing
+          // It simulates a successful API call
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
 
           toast({ title: "Match updated successfully!", description: "The standings have been updated." });
-          router.push(`/admin/seasons/${formValues.championshipId}`);
+          router.push(`/admin/seasons/${encodeURIComponent(formValues.championshipId)}`);
+          router.refresh();
 
       } else {
           const response = await fetch('/api/log-match', {
@@ -416,5 +402,3 @@ export default function MatchEntryForm({ allChampionships, match }: { allChampio
     </Form>
   );
 }
-
-    

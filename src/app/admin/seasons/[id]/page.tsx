@@ -92,7 +92,7 @@ export default function SeasonDetailsPage() {
                     </div>
                 </div>
                 <Button asChild>
-                    <Link href={`/admin/seasons/${decodedId}/settings`}>
+                    <Link href={`/admin/seasons/${params.id}/settings`}>
                         <Settings className="mr-2 h-4 w-4" />
                         Season Settings
                     </Link>
@@ -110,7 +110,7 @@ export default function SeasonDetailsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                   <MatchList matches={matches} users={users} seasonId={decodedId!} />
+                   <MatchList matches={matches} users={users} seasonId={params.id as string} />
                 </CardContent>
             </Card>
         </div>
