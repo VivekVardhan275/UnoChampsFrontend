@@ -13,6 +13,9 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 export const metadata: Metadata = {
   title: 'UNOstat - UNO Championship Portal',
   description: 'Manage, track, and display standings for your UNO league.',
+  icons: {
+    icon: 'data:;base64,iVBORw0KGgo=',
+  }
 };
 
 export default function RootLayout({

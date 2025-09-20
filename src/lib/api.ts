@@ -50,7 +50,6 @@ let matches: Match[] = [
 
 let nextUserId = 100;
 let nextMatchId = 104;
-let nextChampionshipId = 3;
 
 
 export async function getUsers(): Promise<User[]> {
@@ -102,30 +101,31 @@ export async function getMatchesByChampionshipId(championshipId: string): Promis
 export async function getChampionships(token?: string | null): Promise<Championship[]> {
     if (!token) {
         console.error("Authentication token is missing.");
-        return Promise.resolve([
-            { id: 'Season 1', name: 'Season 1'},
-            { id: '2024 Championship', name: '2024 Championship'},
-        ]);
+        return [];
     }
 
     try {
         const response = await axios.get(`${backendUrl}/api/seasons/get-seasons`, {
             headers: { Authorization: `Bearer ${token}` },
         });
-        const seasons = response.data.map((season: { seasonName: string }) => ({
+        const seasons: Championship[] = response.data.map((season: { seasonName: string }) => ({
             id: season.seasonName,
             name: season.seasonName,
         }));
+        // Update mock championships so other functions can see them
+        championships = seasons;
         return seasons;
     } catch (error) {
         console.error('Failed to fetch championships:', error);
-        return [];
+        // Fallback to mock data if API fails
+        return [
+             { id: 'Season 1', name: 'Season 1'},
+            { id: '2024 Championship', name: '2024 Championship'},
+        ]
     }
 }
 
 export async function getChampionshipById(id: string): Promise<Championship | undefined> {
-    // This will now filter the hardcoded championships. To make it work with the API,
-    // we would need a getChampionshipById endpoint. For now, it uses mock data.
     return Promise.resolve(championships.find(c => c.id === id));
 }
 

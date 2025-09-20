@@ -1,16 +1,59 @@
+'use client';
 import { getMatches, getUsers, getChampionships } from '@/lib/api';
 import StandingsSelector from '@/components/standings/StandingsSelector';
-import { getSession } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
+import { Championship, Match, User } from '@/lib/definitions';
+import { useEffect, useState } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default async function AdminStandingsPage() {
-  const session = await getSession();
-  
-  // Pass the token from the session to getChampionships
-  const [users, matches, championships] = await Promise.all([
-    getUsers(),
-    getMatches(),
-    getChampionships(session?.token),
-  ]);
+export default function AdminStandingsPage() {
+  const { token, isLoading: isAuthLoading } = useAuth();
+  const [data, setData] = useState<{
+    users: User[];
+    matches: Match[];
+    championships: Championship[];
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+   useEffect(() => {
+    if (!isAuthLoading && token) {
+      const fetchData = async () => {
+        try {
+          const [users, matches, championships] = await Promise.all([
+            getUsers(),
+            getMatches(),
+            getChampionships(token),
+          ]);
+          setData({ users, matches, championships });
+        } catch (error) {
+          console.error("Failed to fetch page data", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchData();
+    } else if (!isAuthLoading && !token) {
+      // Handle case where there is no token but auth is not loading
+      setIsLoading(false);
+    }
+  }, [isAuthLoading, token]);
+
+
+  if (isLoading || isAuthLoading) {
+     return (
+        <div className="space-y-8">
+            <div className="text-center">
+                <Skeleton className="h-12 w-3/4 mx-auto mb-4" />
+                <Skeleton className="h-6 w-1/2 mx-auto" />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+                <Skeleton className="h-10 w-full sm:w-[280px]" />
+                <Skeleton className="h-10 w-full sm:w-[280px]" />
+            </div>
+            <Skeleton className="h-96 w-full" />
+        </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -24,9 +67,9 @@ export default async function AdminStandingsPage() {
       </div>
 
       <StandingsSelector
-        championships={championships}
-        matches={matches}
-        users={users}
+        championships={data?.championships || []}
+        matches={data?.matches || []}
+        users={data?.users || []}
       />
     </div>
   );
