@@ -19,6 +19,7 @@ export default function LoginPage() {
     <div className="flex items-start justify-center">
       <div className="w-full max-w-md">
         <h1 className="text-3xl font-bold text-center mb-6">Login to UNOstat</h1>
+        <p className="text-center text-muted-foreground mb-6">Since mock data has been removed, you must first register a user before you can log in.</p>
         <Tabs defaultValue="player" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="player"><User className="mr-2 h-4 w-4" />Player Login</TabsTrigger>
@@ -31,13 +32,6 @@ export default function LoginPage() {
                         <CardDescription>Access your profile and view championship standings.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <RoleCredentials
-                            icon={<User className="h-4 w-4" />}
-                            role="Player User"
-                            description="For viewing standings and profiles."
-                            email="bob@example.com"
-                            password="password123"
-                        />
                         <LoginForm />
                     </CardContent>
                 </Card>
@@ -49,13 +43,6 @@ export default function LoginPage() {
                         <CardDescription>Manage players, log matches, and configure the league.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <RoleCredentials
-                            icon={<Shield className="h-4 w-4" />}
-                            role="Admin User"
-                            description="For managing players and matches."
-                            email="alice@example.com"
-                            password="password123"
-                        />
                         <LoginForm />
                     </CardContent>
                 </Card>
