@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, PlusCircle, Save, Loader2 } from 'lucide-react';
+import { AlertCircle, PlusCircle, Save, Loader2, PenSquare } from 'lucide-react';
 import { Championship } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,6 +37,12 @@ export default function SeasonForm({ season }: { season?: Championship }) {
         }
     });
 
+    useEffect(() => {
+        if (season) {
+            reset({ name: season.name });
+        }
+    }, [season, reset]);
+
     const onSubmit: SubmitHandler<FormValues> = async (data) => {
         if (!token) {
             setServerError("Authentication error. Please log in again.");
@@ -48,14 +54,18 @@ export default function SeasonForm({ season }: { season?: Championship }) {
 
         try {
             if (isEditing && season) {
-                // Keep the existing update logic for editing for now.
-                // This would be refactored similarly if an update endpoint existed.
-                await updateChampionshipInApi(season.id, data.name);
+                // This is a mock action for now.
+                console.log(`Renaming season ${season.id} to ${data.name}`);
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+                
                  toast({
                     title: "Success",
-                    description: "Season updated successfully.",
+                    description: `Season renamed to "${data.name}".`,
                 });
-                router.refresh();
+                // In a real app, you'd likely redirect or refresh.
+                // For the mock, we'll just refresh to show it could work.
+                router.refresh(); 
+                router.push('/admin/seasons');
             } else {
                 // Use the new client-side API call for creation.
                 await addChampionshipToApi(data.name, token);
@@ -86,9 +96,8 @@ export default function SeasonForm({ season }: { season?: Championship }) {
                 <Input
                     id="name"
                     {...register("name")}
-                    placeholder=""
+                    placeholder="e.g. Winter League 2024"
                     required
-                    defaultValue={season?.name}
                 />
                 {errors.name && (
                     <p className="text-sm font-medium text-destructive">{errors.name.message}</p>
@@ -105,8 +114,8 @@ export default function SeasonForm({ season }: { season?: Championship }) {
             
             <Button type="submit" className="w-full" disabled={isSubmitting}>
                {isSubmitting 
-                    ? <><Loader2 className="animate-spin" /> {isEditing ? 'Saving...' : 'Creating...'}</>
-                    : (isEditing ? <><Save /> Save Changes</> : <><PlusCircle/> Create Season</>)
+                    ? <><Loader2 className="animate-spin" /> {isEditing ? 'Renaming...' : 'Creating...'}</>
+                    : (isEditing ? <><PenSquare/> Rename Season</> : <><PlusCircle/> Create Season</>)
                }
             </Button>
         </form>

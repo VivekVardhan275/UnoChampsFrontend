@@ -3,16 +3,21 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { notFound } from "next/navigation";
 
-// This is a mock page and does not fetch real data.
-const MOCK_SEASON = {
-    id: 'mock-season-id',
-    name: "Sample Season Name"
-};
 
 export default function EditSeasonPage({ params }: { params: { id: string } }) {
-    const season = MOCK_SEASON;
-    const decodedId = params.id; // Not used for fetching, but kept for consistency
+    const decodedId = params.id ? decodeURIComponent(params.id) : null;
+
+    if (!decodedId) {
+        notFound();
+        return null;
+    }
+
+    const season = {
+        id: decodedId,
+        name: decodedId
+    };
 
     return (
         <div className="space-y-6 max-w-lg mx-auto">
@@ -29,12 +34,11 @@ export default function EditSeasonPage({ params }: { params: { id: string } }) {
             </div>
              <Card>
                 <CardHeader>
-                    <CardTitle>Season Details</CardTitle>
+                    <CardTitle>Rename Season</CardTitle>
                     <CardDescription>Change the name of the season below.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {/* The SeasonForm will be in its 'create' state as no season prop is passed */}
-                    <SeasonForm />
+                    <SeasonForm season={season} />
                 </CardContent>
             </Card>
         </div>
