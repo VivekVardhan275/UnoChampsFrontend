@@ -72,21 +72,25 @@ export async function getMatchesByChampionshipId(championshipId: string, token: 
             params: { season: championshipId }
         });
 
+        if (!response.data || !Array.isArray(response.data)) {
+            console.error('API did not return an array of games.');
+            return [];
+        }
+
         const apiGames: ApiGame[] = response.data;
         
-        const transformedMatches: Match[] = await Promise.all(apiGames.map(async (game, index) => {
-            const participantPromises = game.members.map(async (memberName, i) => {
-                const user = await findOrCreateUserByName(memberName);
-                return {
-                    userId: user.id,
-                    rank: parseInt(game.ranks[i], 10),
-                    points: parseInt(game.points[i], 10),
-                };
-            });
-            const participants = await Promise.all(participantPromises);
+        const transformedMatches: Match[] = await Promise.all(apiGames.map(async (game) => {
+            const participants = await Promise.all(
+                game.members.map(async (memberName, index) => {
+                    const user = await findOrCreateUserByName(memberName);
+                    return {
+                        userId: user.id,
+                        rank: parseInt(game.ranks[index], 10),
+                        points: parseInt(game.points[index], 10),
+                    };
+                })
+            );
             
-            // Extract date from gameName if possible, otherwise use current date.
-            // This is a placeholder as the API doesn't provide a date field.
             const dateMatch = game.gameName.match(/(\d{2}\/\d{2}\/\d{4})/);
             let date = new Date();
             if (dateMatch) {
@@ -95,7 +99,7 @@ export async function getMatchesByChampionshipId(championshipId: string, token: 
             }
 
             return {
-                id: `${championshipId}-${index}`, // Create a stable but temporary ID
+                id: `${championshipId}-${game.gameName}`,
                 name: game.gameName,
                 championshipId: game.season.seasonName,
                 date: date.toISOString(),
