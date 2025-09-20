@@ -19,7 +19,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function StandingsSelector({
   championships,
-  users,
+  users: initialUsers,
 }: {
   championships: Championship[];
   users: User[];
@@ -28,6 +28,7 @@ export default function StandingsSelector({
   const [selectedChampionship, setSelectedChampionship] = useState<string>('');
   const [selectedMatch, setSelectedMatch] = useState<string>('all');
   const [filteredMatches, setFilteredMatches] = useState<Match[]>([]);
+  const [currentUsers, setCurrentUsers] = useState<User[]>(initialUsers);
   const [isLoadingMatches, setIsLoadingMatches] = useState(false);
 
   useEffect(() => {
@@ -37,13 +38,18 @@ export default function StandingsSelector({
       setSelectedChampionship(sortedChampionships[0].id);
     }
   }, [championships]);
+  
+  useEffect(() => {
+    setCurrentUsers(initialUsers);
+  }, [initialUsers])
 
   useEffect(() => {
     if (selectedChampionship && token) {
       const fetchMatches = async () => {
         setIsLoadingMatches(true);
-        const matches = await getMatchesByChampionshipId(selectedChampionship, token);
+        const { matches, users: updatedUsers } = await getMatchesByChampionshipId(selectedChampionship, token);
         setFilteredMatches(matches.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        setCurrentUsers(updatedUsers);
         setIsLoadingMatches(false);
       };
       fetchMatches();
@@ -60,10 +66,10 @@ export default function StandingsSelector({
         matchesToCalculate = [match];
       }
     }
-    const calculated = calculateStandings(matchesToCalculate, users, selectedChampionship);
+    const calculated = calculateStandings(matchesToCalculate, currentUsers);
     return calculated.sort((a, b) => a.rank - b.rank);
 
-  }, [selectedChampionship, selectedMatch, filteredMatches, users]);
+  }, [selectedMatch, filteredMatches, currentUsers]);
 
   const handleChampionshipChange = (championshipId: string) => {
     setSelectedChampionship(championshipId);

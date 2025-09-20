@@ -7,13 +7,11 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 
-export function calculateStandings(matches: Match[], users: User[], championshipId?: string): Standing[] {
+export function calculateStandings(matches: Match[], users: User[]): Standing[] {
   const playerStats: { [key: string]: { totalPoints: number; gamesPlayed: number; finishes: { [key: number]: number } } } = {};
 
-  const filteredMatches = matches;
-  
   const relevantUserIds = new Set<string>();
-  filteredMatches.forEach(match => {
+  matches.forEach(match => {
     match.participants.forEach(p => relevantUserIds.add(p.userId));
   });
 
@@ -27,7 +25,7 @@ export function calculateStandings(matches: Match[], users: User[], championship
     };
   });
 
-  filteredMatches.forEach(match => {
+  matches.forEach(match => {
     match.participants.forEach(participant => {
       if (playerStats[participant.userId]) {
         playerStats[participant.userId].totalPoints += participant.points;
@@ -59,7 +57,7 @@ export function calculateStandings(matches: Match[], users: User[], championship
     .filter((s): s is Omit<Standing, 'rank'> => s !== null);
 
 
-  const maxRank = Math.max(...filteredMatches.flatMap(m => m.participants.map(p => p.rank)), 0);
+  const maxRank = Math.max(...matches.flatMap(m => m.participants.map(p => p.rank)), 0);
 
   standings.sort((a, b) => {
     if (b.totalPoints !== a.totalPoints) {

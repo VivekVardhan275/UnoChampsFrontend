@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import axios, { AxiosError } from 'axios';
@@ -77,13 +78,13 @@ type ApiGame = {
     points: string[];
 };
 
-export async function getMatchesByChampionshipId(championshipId: string, token?: string | null): Promise<Match[]> {
+export async function getMatchesByChampionshipId(championshipId: string, token?: string | null): Promise<{ matches: Match[], users: User[] }> {
     const session = await getSession();
     const authToken = token || session?.token;
     
     if (!authToken) {
         console.error("Authentication token is missing for getMatchesByChampionshipId.");
-        return [];
+        return { matches: [], users: [] };
     }
 
     try {
@@ -94,7 +95,7 @@ export async function getMatchesByChampionshipId(championshipId: string, token?:
 
         if (!response.data || !Array.isArray(response.data)) {
             console.error('API did not return an array of games.');
-            return [];
+            return { matches: [], users: [] };
         }
 
         const apiGames: ApiGame[] = response.data;
@@ -136,10 +137,11 @@ export async function getMatchesByChampionshipId(championshipId: string, token?:
         const otherMatches = matches.filter(m => m.championshipId !== championshipId);
         matches = [...otherMatches, ...transformedMatches];
         
-        return transformedMatches;
+        const allUsers = await getUsers();
+        return { matches: transformedMatches, users: allUsers };
     } catch (error) {
         console.error('Failed to fetch games for season:', error);
-        return [];
+        return { matches: [], users: [] };
     }
 }
 
