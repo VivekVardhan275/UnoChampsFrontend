@@ -123,14 +123,23 @@ export async function getMatchesByChampionshipId(championshipId: string, token?:
             
             const dateMatch = game.gameName.match(/(\d{2}\/\d{2}\/\d{4})/);
             let date = new Date();
+            let gameDisplayName = game.gameName;
+            
             if (dateMatch) {
                 const [day, month, year] = dateMatch[0].split('/');
                 date = new Date(`${year}-${month}-${day}`);
+                // Ensure the name includes the date part, as per your backend response structure
+                if (!game.gameName.includes(dateMatch[0])) {
+                    gameDisplayName = `${game.gameName.trim()} ${dateMatch[0]}`;
+                }
+            } else {
+                 gameDisplayName = game.gameName.replace(/ \d{2}\/\d{2}\/\d{4}$/, '').trim();
             }
+
 
             return {
                 id: `${championshipId}-${game.gameName}`,
-                name: game.gameName,
+                name: gameDisplayName,
                 championshipId: championshipId,
                 date: date.toISOString(),
                 participants: participants,
