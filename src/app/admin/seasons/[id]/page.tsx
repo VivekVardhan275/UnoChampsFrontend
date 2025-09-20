@@ -20,14 +20,15 @@ export default function SeasonDetailsPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    const decodedId = params.id ? decodeURIComponent(params.id) : null;
+
     useEffect(() => {
-        if (!isAuthLoading && token && params.id) {
+        if (!isAuthLoading && token && decodedId) {
             const fetchData = async () => {
                 try {
-                    const [seasonData, matchesData, usersData] = await Promise.all([
-                        getChampionshipById(params.id),
-                        getMatchesByChampionshipId(params.id, token),
-                        getUsers()
+                    const [seasonData, { matches: matchesData, users: usersData }] = await Promise.all([
+                        getChampionshipById(decodedId),
+                        getMatchesByChampionshipId(decodedId, token),
                     ]);
                     
                     if (!seasonData) {
@@ -48,7 +49,7 @@ export default function SeasonDetailsPage() {
         } else if (!isAuthLoading) {
              setIsLoading(false);
         }
-    }, [params.id, token, isAuthLoading]);
+    }, [decodedId, token, isAuthLoading]);
 
     if (isLoading || isAuthLoading || !season) {
         return (
