@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Select,
   SelectContent,
@@ -24,10 +24,17 @@ export default function StandingsSelector({
   matches: Match[];
   users: User[];
 }) {
-  const [selectedChampionship, setSelectedChampionship] = useState<string>(
-    championships[0]?.id || ''
-  );
+  const [selectedChampionship, setSelectedChampionship] = useState<string>('');
   const [selectedMatch, setSelectedMatch] = useState<string>('all'); // 'all' for season standings
+
+  useEffect(() => {
+    // Default to the latest season if championships are available
+    if (championships.length > 0) {
+      // Assuming the last one in the list is the latest.
+      // If there's a date field, sorting by it would be more reliable.
+      setSelectedChampionship(championships[championships.length - 1].id);
+    }
+  }, [championships]);
 
   const filteredMatches = useMemo(() => {
     return matches.filter((match) => match.championshipId === selectedChampionship)
@@ -63,6 +70,7 @@ export default function StandingsSelector({
         <Select
           value={selectedChampionship}
           onValueChange={handleChampionshipChange}
+          disabled={championships.length === 0}
         >
           <SelectTrigger className="w-full sm:w-[280px]">
             <SelectValue placeholder="Select a Season" />

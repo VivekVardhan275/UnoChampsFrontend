@@ -1,8 +1,11 @@
 'use server';
 
+import axios from 'axios';
 import type { Championship, Match, User, MatchToCreate } from './definitions';
 
-// In-memory data store
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+// In-memory data store for non-auth data
 let users: User[] = [
     { id: '1', name: 'Alice', email: 'alice@example.com', role: 'PLAYER', avatarUrl: 'https://picsum.photos/seed/Alice/200/200' },
     { id: '2', name: 'Bob', email: 'bob@example.com', role: 'PLAYER', avatarUrl: 'https://picsum.photos/seed/Bob/200/200' },
@@ -10,14 +13,14 @@ let users: User[] = [
     { id: '99', name: 'Admin', email: 'admin@unostat.com', role: 'ADMIN', avatarUrl: 'https://picsum.photos/seed/Admin/200/200' },
 ];
 let championships: Championship[] = [
-    { id: '1', name: 'Season 1'},
-    { id: '2', name: '2024 Championship'},
+    { id: 'Season 1', name: 'Season 1'},
+    { id: '2024 Championship', name: '2024 Championship'},
 ];
 let matches: Match[] = [
     {
         id: '101',
         name: 'Game 1',
-        championshipId: '1',
+        championshipId: 'Season 1',
         date: new Date('2024-05-10').toISOString(),
         participants: [
             { userId: '1', rank: 1, points: 20 },
@@ -28,7 +31,7 @@ let matches: Match[] = [
     {
         id: '102',
         name: 'Game 2',
-        championshipId: '1',
+        championshipId: 'Season 1',
         date: new Date('2024-05-12').toISOString(),
         participants: [
             { userId: '3', rank: 1, points: 20 },
@@ -39,7 +42,7 @@ let matches: Match[] = [
     {
         id: '103',
         name: 'Tournament Opener',
-        championshipId: '2',
+        championshipId: '2024 Championship',
         date: new Date('2024-06-01').toISOString(),
         participants: [
             { userId: '2', rank: 1, points: 10 },
@@ -99,11 +102,32 @@ export async function getMatchesByChampionshipId(championshipId: string): Promis
     return Promise.resolve(matchesWithUsers);
 }
 
-export async function getChampionships(): Promise<Championship[]> {
-  return Promise.resolve(championships);
+export async function getChampionships(token?: string | null): Promise<Championship[]> {
+    if (!token) {
+        console.error("Authentication token is missing.");
+        return [];
+    }
+
+    try {
+        const response = await axios.get(`${backendUrl}/api/seasons/get-seasons`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        // The API returns an array of objects with a `seasonName` property.
+        // We map this to the `Championship` type used in the application.
+        const seasons = response.data.map((season: { seasonName: string }) => ({
+            id: season.seasonName,
+            name: season.seasonName,
+        }));
+        return seasons;
+    } catch (error) {
+        console.error('Failed to fetch championships:', error);
+        return [];
+    }
 }
 
 export async function getChampionshipById(id: string): Promise<Championship | undefined> {
+    // This will now filter the hardcoded championships. To make it work with the API,
+    // we would need a getChampionshipById endpoint. For now, it uses mock data.
     return Promise.resolve(championships.find(c => c.id === id));
 }
 
@@ -133,7 +157,7 @@ export async function deleteMatch(id: string): Promise<void> {
 
 export async function addChampionship(name: string): Promise<Championship> {
     const newChampionship: Championship = {
-        id: (nextChampionshipId++).toString(),
+        id: name, // Using name as ID for consistency with GET endpoint
         name,
     };
     championships.push(newChampionship);
@@ -146,6 +170,7 @@ export async function updateChampionship(id: string, name: string): Promise<Cham
         throw new Error("Championship not found.");
     }
     championships[champIndex].name = name;
+    championships[champIndex].id = name;
     return Promise.resolve(championships[champIndex]);
 }
 

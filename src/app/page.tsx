@@ -9,7 +9,7 @@ import { Championship, Match, User } from '@/lib/definitions';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Home() {
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user, token, isLoading: isAuthLoading } = useAuth();
   const [data, setData] = useState<{
     users: User[];
     matches: Match[];
@@ -24,10 +24,11 @@ export default function Home() {
       } else {
         const fetchData = async () => {
           try {
+            // Pass the token to getChampionships
             const [users, matches, championships] = await Promise.all([
               getUsers(),
               getMatches(),
-              getChampionships(),
+              getChampionships(token),
             ]);
             setData({ users, matches, championships });
           } catch (error) {
@@ -39,7 +40,7 @@ export default function Home() {
         fetchData();
       }
     }
-  }, [user, isAuthLoading]);
+  }, [user, isAuthLoading, token]);
 
   if (isAuthLoading || isLoading || !data) {
     return (

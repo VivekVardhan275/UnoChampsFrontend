@@ -1,11 +1,15 @@
 import { getMatches, getUsers, getChampionships } from '@/lib/api';
 import StandingsSelector from '@/components/standings/StandingsSelector';
+import { getSession } from '@/lib/auth';
 
 export default async function AdminStandingsPage() {
+  const session = await getSession();
+  
+  // Pass the token from the session to getChampionships
   const [users, matches, championships] = await Promise.all([
     getUsers(),
     getMatches(),
-    getChampionships(),
+    getChampionships(session?.token),
   ]);
 
   return (
