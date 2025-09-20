@@ -12,7 +12,7 @@ export default async function AdminDashboard() {
       </div>
 
       <div className="max-w-xl mx-auto w-full flex flex-col gap-6">
-        <Card>
+        <Card className="animate-fade-in-up" style={{ animationDelay: '150ms' }}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><SlidersHorizontal /> Season Management</CardTitle>
           </CardHeader>
@@ -23,7 +23,7 @@ export default async function AdminDashboard() {
             </Button>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="animate-fade-in-up" style={{ animationDelay: '300ms' }}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><PlusCircle /> Log Match Result</CardTitle>
           </CardHeader>
@@ -34,7 +34,7 @@ export default async function AdminDashboard() {
             </Button>
           </CardContent>
         </Card>
-         <Card>
+         <Card className="animate-fade-in-up" style={{ animationDelay: '450ms' }}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Swords /> Game & Match History</CardTitle>
           </CardHeader>
