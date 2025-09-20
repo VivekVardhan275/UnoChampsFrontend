@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -119,7 +120,7 @@ export default function MatchEntryForm({ allChampionships, match }: { allChampio
     const { formValues, calculatedParticipants } = previewData;
     
     const apiPayload = {
-      gameName: formValues.name,
+      gameName: `${formValues.name} ${format(formValues.date, "dd/MM/yyyy")}`,
       members: calculatedParticipants.map(p => p.name),
       ranks: calculatedParticipants.map(p => p.rank.toString()),
       points: calculatedParticipants.map(p => p.points.toString()),
@@ -206,7 +207,7 @@ export default function MatchEntryForm({ allChampionships, match }: { allChampio
             </div>
             <Card>
                 <CardHeader>
-                    <CardTitle>{formValues.name}</CardTitle>
+                    <CardTitle>{`${formValues.name} ${format(formValues.date, "dd/MM/yyyy")}`}</CardTitle>
                     <CardDescription>
                         Playing in <strong>{championship?.name}</strong> on <strong>{format(formValues.date, "PPP")}</strong>
                     </CardDescription>
@@ -415,3 +416,5 @@ export default function MatchEntryForm({ allChampionships, match }: { allChampio
     </Form>
   );
 }
+
+    
