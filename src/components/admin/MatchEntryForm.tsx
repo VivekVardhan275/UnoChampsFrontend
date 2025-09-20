@@ -12,14 +12,16 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "../ui/card";
 import { Trash2, ListPlus, UserPlus, Eye, ArrowLeft } from "lucide-react";
-import { logMatch, updateMatch } from "@/lib/actions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Championship, Match, User } from "@/lib/definitions";
-import { getUsersByName } from "@/lib/api";
+import { getUsersByName, updateMatch as updateMatchInApi } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 const ParticipantSchema = z.object({
   name: z.string().min(1, "Player name is required."),
@@ -51,7 +53,10 @@ type FormValues = z.infer<typeof FormSchema>;
 type ParticipantWithPoints = z.infer<typeof ParticipantSchema> & { points: number };
 
 export default function MatchEntryForm({ allChampionships, match }: { allChampionships: Championship[], match?: Match & { participants: ({ user: User } & Match['participants'][0])[]} }) {
+  const { token } = useAuth();
+  const router = useRouter();
   const isEditing = !!match;
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<'entry' | 'preview'>('entry');
   const [previewData, setPreviewData] = useState<{ formValues: FormValues; calculatedParticipants: ParticipantWithPoints[] } | null>(null);
 
@@ -62,17 +67,13 @@ export default function MatchEntryForm({ allChampionships, match }: { allChampio
       name: match?.name || '',
       date: match ? new Date(match.date) : new Date(),
       participants: [],
-      multiplier: 10, // Assuming a default multiplier, you might want to fetch this if it's part of the match
+      multiplier: 10,
     },
   });
 
   useEffect(() => {
     if (isEditing && match) {
       const fetchParticipantDetails = async () => {
-        const userIds = match.participants.map(p => p.userId);
-        // This is inefficient. A single backend call to get users by IDs would be better.
-        // For now, we assume a `getUsersByName` can work if names are available on match object,
-        // which they are not by default. Let's assume the passed `match` object has user details.
         const participantUsers = match.participants.map(p => p.user);
         const userMap = new Map(participantUsers.map(u => [u.id, u]));
 
@@ -109,52 +110,85 @@ export default function MatchEntryForm({ allChampionships, match }: { allChampio
   };
 
   async function onSubmit() {
-    if (!previewData) return;
+    if (!previewData || !token) {
+        toast({ variant: "destructive", title: "An error occurred.", description: "Authentication token not found." });
+        return;
+    };
+    
+    setIsSubmitting(true);
 
     const { formValues, calculatedParticipants } = previewData;
     
-    const dataToSubmit = {
-        ...formValues,
-        participants: calculatedParticipants.map(({ name, rank, points }) => ({
-            name,
-            rank,
-            points
-        }))
-    }
+    const apiPayload = {
+      gameName: formValues.name,
+      members: calculatedParticipants.map(p => p.name),
+      ranks: calculatedParticipants.map(p => p.rank.toString()),
+      points: calculatedParticipants.map(p => p.points.toString()),
+    };
 
     try {
-        if(isEditing && match) {
-            await updateMatch(match.id, dataToSubmit);
-            toast({
-                title: "Match updated successfully!",
-                description: "The standings have been updated.",
-            });
-        } else {
-            await logMatch(dataToSubmit);
-            toast({
-            title: "Match logged successfully!",
-            description: "The standings have been updated.",
-            });
-        }
-        
-        if(!isEditing) {
-            form.reset({
-                championshipId: allChampionships[0]?.id || '',
-                name: '',
-                date: new Date(),
-                participants: [],
-                multiplier: 10,
-            });
-        }
+      if (isEditing && match) {
+          // This uses the mock update for now. A real app would have a dedicated API route.
+          const participantPromises = calculatedParticipants.map(async (p) => {
+              const user = await getUsersByName([p.name]);
+              return {
+                  userId: user[0].id,
+                  rank: p.rank,
+                  points: p.points,
+              };
+          });
 
-        setStep('entry');
-        setPreviewData(null);
+          const participantsWithUserIds = await Promise.all(participantPromises);
+
+          await updateMatchInApi(match.id, {
+              championshipId: formValues.championshipId,
+              name: formValues.name,
+              date: formValues.date.toISOString(),
+              participants: participantsWithUserIds,
+          });
+
+          toast({ title: "Match updated successfully!", description: "The standings have been updated." });
+          router.push(`/admin/seasons/${formValues.championshipId}`);
+
+      } else {
+          const response = await fetch('/api/log-match', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                  season: formValues.championshipId,
+                  ...apiPayload
+              })
+          });
+
+          if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.message || 'Failed to log match.');
+          }
+
+          toast({ title: "Match logged successfully!", description: "The standings have been updated." });
+          
+          form.reset({
+              championshipId: allChampionships[0]?.id || '',
+              name: '',
+              date: new Date(),
+              participants: [],
+              multiplier: 10,
+          });
+          setStep('entry');
+          setPreviewData(null);
+          router.refresh();
+      }
     } catch(error) {
         toast({
             variant: "destructive",
             title: "An error occurred.",
             description: (error as Error).message,
         })
+    } finally {
+        setIsSubmitting(false);
     }
   }
 
@@ -202,8 +236,8 @@ export default function MatchEntryForm({ allChampionships, match }: { allChampio
                     <Button variant="ghost" onClick={() => setStep('entry')}>
                         <ArrowLeft className="mr-2" /> Back to Edit
                     </Button>
-                    <Button onClick={onSubmit} disabled={form.formState.isSubmitting}>
-                         {form.formState.isSubmitting 
+                    <Button onClick={onSubmit} disabled={isSubmitting}>
+                         {isSubmitting
                             ? (isEditing ? "Saving..." : "Logging...") 
                             : (isEditing ? <><Save className="mr-2 h-4 w-4" /> Save Changes</> : <><ListPlus className="mr-2 h-4 w-4" /> Log Match</>)
                          }
