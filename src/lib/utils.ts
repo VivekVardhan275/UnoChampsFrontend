@@ -10,6 +10,7 @@ export function cn(...inputs: ClassValue[]) {
 export function calculateStandings(matches: Match[], users: User[], championshipId?: string): Standing[] {
   const playerStats: { [key: string]: { totalPoints: number; gamesPlayed: number; finishes: { [key: number]: number } } } = {};
 
+  // If a championshipId is provided, filter matches by it. Otherwise, use all provided matches.
   const filteredMatches = championshipId ? matches.filter(m => m.championshipId === championshipId) : matches;
 
   const relevantUserIds = new Set<string>();
@@ -17,8 +18,11 @@ export function calculateStandings(matches: Match[], users: User[], championship
     match.participants.forEach(p => relevantUserIds.add(p.userId));
   });
 
+  // Instead of filtering the passed-in 'users', get the user objects that correspond to the participants
+  // in the filtered matches. This is crucial for single-game views.
   const relevantUsers = users.filter(u => relevantUserIds.has(u.id));
 
+  // Initialize stats for only the players who are in the relevant matches.
   relevantUsers.forEach(user => {
     playerStats[user.id] = {
       totalPoints: 0,
@@ -27,28 +31,26 @@ export function calculateStandings(matches: Match[], users: User[], championship
     };
   });
 
+  // Tally stats from the filtered matches.
   filteredMatches.forEach(match => {
     match.participants.forEach(participant => {
-      // Ensure the stats object exists before trying to update it.
-      // This handles cases where a user from a match might not be in the initial `relevantUsers` list,
-      // though the above logic should prevent this. It's a safe-guard.
-      if (!playerStats[participant.userId]) {
-         playerStats[participant.userId] = { totalPoints: 0, gamesPlayed: 0, finishes: {} };
+      // Only process participants who are in our list of relevant users.
+      if (playerStats[participant.userId]) {
+        playerStats[participant.userId].totalPoints += participant.points;
+        playerStats[participant.userId].gamesPlayed += 1;
+        
+        const rank = participant.rank;
+        playerStats[participant.userId].finishes[rank] = (playerStats[participant.userId].finishes[rank] || 0) + 1;
       }
-      playerStats[participant.userId].totalPoints += participant.points;
-      playerStats[participant.userId].gamesPlayed += 1;
-      
-      const rank = participant.rank;
-      playerStats[participant.userId].finishes[rank] = (playerStats[participant.userId].finishes[rank] || 0) + 1;
     });
   });
 
-  let standings: Omit<Standing, 'rank'>[] = Object.keys(playerStats)
-    .map(userId => {
-        const user = users.find(u => u.id === userId);
-        if (!user || playerStats[userId].gamesPlayed === 0) return null;
+  let standings: Omit<Standing, 'rank'>[] = relevantUsers
+    .map(user => {
+        const stats = playerStats[user.id];
+        // Only include players who have actually played a game in the selection.
+        if (!stats || stats.gamesPlayed === 0) return null;
 
-        const stats = playerStats[userId];
         return {
             player: user,
             totalPoints: stats.totalPoints,
