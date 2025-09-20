@@ -79,7 +79,7 @@ export default function MatchEntryForm({ allChampionships, match }: { allChampio
 
         form.reset({
           championshipId: match.championshipId,
-          name: match.name,
+          name: match.name.replace(/ \d{2}\/\d{2}\/\d{4}$/, '').trim(),
           date: new Date(match.date),
           multiplier: 10, 
           participants: match.participants.sort((a,b) => a.rank - b.rank).map(p => ({
@@ -119,8 +119,11 @@ export default function MatchEntryForm({ allChampionships, match }: { allChampio
 
     const { formValues, calculatedParticipants } = previewData;
     
+    const formattedDate = format(formValues.date, "dd/MM/yyyy");
+    const gameNameWithDate = isEditing && match ? match.name : `${formValues.name} ${formattedDate}`;
+
     const apiPayload = {
-      gameName: formValues.name,
+      gameName: gameNameWithDate,
       members: calculatedParticipants.map(p => p.name),
       ranks: calculatedParticipants.map(p => p.rank.toString()),
       points: calculatedParticipants.map(p => p.points.toString()),
@@ -191,6 +194,7 @@ export default function MatchEntryForm({ allChampionships, match }: { allChampio
   if (step === 'preview' && previewData) {
     const { formValues, calculatedParticipants } = previewData;
     const championship = allChampionships.find(c => c.id === formValues.championshipId);
+    const gameNameWithDate = isEditing && match ? match.name : `${formValues.name} ${format(formValues.date, "dd/MM/yyyy")}`;
 
     return (
         <div className="space-y-6 max-w-2xl mx-auto">
@@ -203,7 +207,7 @@ export default function MatchEntryForm({ allChampionships, match }: { allChampio
             </div>
             <Card>
                 <CardHeader>
-                    <CardTitle>{`${formValues.name}`}</CardTitle>
+                    <CardTitle>{gameNameWithDate}</CardTitle>
                     <CardDescription>
                         Playing in <strong>{championship?.name}</strong> on <strong>{format(formValues.date, "PPP")}</strong>
                     </CardDescription>
@@ -413,3 +417,5 @@ export default function MatchEntryForm({ allChampionships, match }: { allChampio
     </Form>
   );
 }
+
+    
