@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -47,14 +48,21 @@ export default function StandingsSelector({
     if (selectedChampionship && token) {
       const fetchMatches = async () => {
         setIsLoadingMatches(true);
-        const { matches, users: updatedUsers } = await getMatchesByChampionshipId(selectedChampionship, token);
-        setFilteredMatches(matches.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-        setCurrentUsers(updatedUsers);
-        setIsLoadingMatches(false);
+        try {
+          const { matches, users: updatedUsers } = await getMatchesByChampionshipId(selectedChampionship, token);
+          setFilteredMatches(matches.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+          setCurrentUsers(updatedUsers);
+        } catch (error) {
+            console.error("Failed to fetch matches for season", error);
+            setFilteredMatches([]);
+            setCurrentUsers(initialUsers);
+        } finally {
+            setIsLoadingMatches(false);
+        }
       };
       fetchMatches();
     }
-  }, [selectedChampionship, token]);
+  }, [selectedChampionship, token, initialUsers]);
 
   const standings = useMemo(() => {
     let matchesToCalculate: Match[] = [];
