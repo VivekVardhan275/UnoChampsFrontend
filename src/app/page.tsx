@@ -19,6 +19,8 @@ export default function Home() {
     if (!isAuthLoading) {
       if (!user) {
         redirect('/login');
+      } else if (user.role === 'ADMIN') {
+        redirect('/admin');
       } else {
         const fetchData = async () => {
           try {
