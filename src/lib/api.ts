@@ -76,7 +76,7 @@ type ApiGame = {
     points: string[];
 };
 
-export async function getMatchesByChampionshipId(championshipId: string, token: string | null): Promise<Match[]> {
+export async function getMatchesByChampionshipId(championshipId: string, token?: string | null): Promise<Match[]> {
     const session = await getSession();
     const authToken = token || session?.token;
     
