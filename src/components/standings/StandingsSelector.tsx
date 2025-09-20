@@ -60,7 +60,7 @@ export default function StandingsSelector({
         matchesToCalculate = [match];
       }
     }
-    const calculated = calculateStandings(matchesToCalculate, users);
+    const calculated = calculateStandings(matchesToCalculate, users, selectedChampionship);
     return calculated.sort((a, b) => a.rank - b.rank);
 
   }, [selectedChampionship, selectedMatch, filteredMatches, users]);

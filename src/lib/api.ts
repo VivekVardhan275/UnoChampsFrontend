@@ -4,7 +4,7 @@ import axios from 'axios';
 import type { Championship, Match, User, MatchToCreate } from './definitions';
 import { findOrCreateUserByName } from './actions';
 
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
 
 // In-memory data store for non-auth data
 let users: User[] = [
@@ -80,6 +80,7 @@ export async function getMatchesByChampionshipId(championshipId: string, token: 
         const apiGames: ApiGame[] = response.data;
         
         const transformedMatches: Match[] = await Promise.all(apiGames.map(async (game) => {
+            
             const participants = await Promise.all(
                 game.members.map(async (memberName, index) => {
                     const user = await findOrCreateUserByName(memberName);
@@ -101,7 +102,7 @@ export async function getMatchesByChampionshipId(championshipId: string, token: 
             return {
                 id: `${championshipId}-${game.gameName}`,
                 name: game.gameName,
-                championshipId: game.season.seasonName,
+                championshipId: championshipId,
                 date: date.toISOString(),
                 participants: participants,
             };
