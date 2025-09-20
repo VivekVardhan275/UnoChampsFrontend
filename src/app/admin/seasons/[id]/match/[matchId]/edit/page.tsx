@@ -1,39 +1,91 @@
 
+'use client';
+
+import { useEffect, useState } from "react";
+import { useParams, notFound, useRouter } from "next/navigation";
 import MatchEntryForm from "@/components/admin/MatchEntryForm";
 import { Button } from "@/components/ui/button";
 import { Championship, Match, User } from "@/lib/definitions";
 import { ArrowLeft } from "lucide-react";
 import Link from 'next/link';
+import { getMatchesByChampionshipId, getChampionships } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export default function EditMatchPage({ params }: { params: { id: string; matchId: string } }) {
-    
-    const mockChampionships: Championship[] = [
-        { id: 'Summer Season 2024', name: 'Summer Season 2024' },
-        { id: decodeURIComponent(params.id), name: decodeURIComponent(params.id) },
-    ];
+type EnrichedParticipant = Match['participants'][0] & { user: User };
+type EnrichedMatch = Omit<Match, 'participants'> & { participants: EnrichedParticipant[] };
 
-    const mockUser1: User = { id: '1', name: 'Alice', email: 'alice@example.com', role: 'PLAYER', avatarUrl: 'https://picsum.photos/seed/Alice/200/200' };
-    const mockUser2: User = { id: '2', name: 'Bob', email: 'bob@example.com', role: 'PLAYER', avatarUrl: 'https://picsum.photos/seed/Bob/200/200' };
-    const mockUser3: User = { id: '3', name: 'Charlie', email: 'charlie@example.com', role: 'PLAYER', avatarUrl: 'https://picsum.photos/seed/Charlie/200/200' };
+export default function EditMatchPage() {
+    const params = useParams<{ id: string; matchId: string }>();
+    const { token, isLoading: isAuthLoading } = useAuth();
+    const router = useRouter();
 
-    const dateMatch = decodeURIComponent(params.matchId).match(/(\d{2}\/\d{2}\/\d{4})/);
-    let date = new Date();
-    if (dateMatch) {
-        const [day, month, year] = dateMatch[0].split('/');
-        date = new Date(`${year}-${month}-${day}`);
+    const [match, setMatch] = useState<EnrichedMatch | null>(null);
+    const [allChampionships, setAllChampionships] = useState<Championship[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const decodedSeasonId = decodeURIComponent(params.id as string);
+    const decodedMatchId = decodeURIComponent(params.matchId as string);
+
+    useEffect(() => {
+        if (!token || isAuthLoading) return;
+
+        const fetchData = async () => {
+            try {
+                setIsLoading(true);
+                const [championshipsData, { matches, users }] = await Promise.all([
+                    getChampionships(token),
+                    getMatchesByChampionshipId(decodedSeasonId, token)
+                ]);
+
+                setAllChampionships(championshipsData);
+                
+                const foundMatch = matches.find(m => m.id === decodedMatchId);
+                
+                if (foundMatch) {
+                    const userMap = new Map(users.map(u => [u.id, u]));
+                    const enrichedParticipants = foundMatch.participants
+                        .map(p => ({ ...p, user: userMap.get(p.userId)! }))
+                        .filter(p => p.user);
+                    
+                    setMatch({
+                        ...foundMatch,
+                        participants: enrichedParticipants as EnrichedParticipant[],
+                    });
+                }
+            } catch (error) {
+                console.error("Failed to fetch match data:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchData();
+
+    }, [decodedSeasonId, decodedMatchId, token, isAuthLoading]);
+
+    if (isLoading || isAuthLoading) {
+        return (
+             <div className="space-y-6">
+                <div className="flex items-center gap-4">
+                    <Skeleton className="h-10 w-10" />
+                    <div>
+                        <Skeleton className="h-9 w-64 mb-2" />
+                        <Skeleton className="h-5 w-72" />
+                    </div>
+                </div>
+                 <div className="space-y-6 max-w-2xl mx-auto">
+                    <Skeleton className="h-48 w-full" />
+                    <Skeleton className="h-96 w-full" />
+                 </div>
+            </div>
+        );
     }
-
-    const mockMatch: Match & { participants: ({ user: User } & Match['participants'][0])[]} = {
-        id: decodeURIComponent(params.matchId),
-        name: decodeURIComponent(params.matchId).split(' ')[0] + " " + decodeURIComponent(params.matchId).split(' ')[1],
-        championshipId: decodeURIComponent(params.id),
-        date: date.toISOString(),
-        participants: [
-            { userId: '1', rank: 1, points: 20, user: mockUser1 },
-            { userId: '2', rank: 2, points: 10, user: mockUser2 },
-            { userId: '3', rank: 3, points: 0, user: mockUser3 },
-        ]
-    };
+    
+    if (!match) {
+        notFound();
+        return null;
+    }
     
     return (
         <div className="space-y-6">
@@ -44,11 +96,11 @@ export default function EditMatchPage({ params }: { params: { id: string; matchI
                     </Link>
                 </Button>
                 <div>
-                    <h1 className="text-3xl font-bold">Edit Match: {mockMatch.name}</h1>
+                    <h1 className="text-3xl font-bold">Edit Match: {match.name}</h1>
                     <p className="text-muted-foreground">Update the participants and ranks for this game.</p>
                 </div>
             </div>
-            <MatchEntryForm allChampionships={mockChampionships} match={mockMatch} />
+            <MatchEntryForm allChampionships={allChampionships} match={match} />
         </div>
     )
 }
