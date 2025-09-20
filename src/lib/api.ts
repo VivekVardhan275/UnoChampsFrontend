@@ -1,3 +1,4 @@
+
 'use server';
 
 import axios, { AxiosError } from 'axios';
@@ -131,7 +132,10 @@ export async function getMatchesByChampionshipId(championshipId: string, token?:
             };
         }));
         
-        matches = [...matches.filter(m => m.championshipId !== championshipId), ...transformedMatches];
+        // Ensure the central matches array is updated correctly
+        const otherMatches = matches.filter(m => m.championshipId !== championshipId);
+        matches = [...otherMatches, ...transformedMatches];
+        
         return transformedMatches;
     } catch (error) {
         console.error('Failed to fetch games for season:', error);
