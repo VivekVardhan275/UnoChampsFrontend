@@ -1,11 +1,12 @@
 
+
 import MatchEntryForm from "@/components/admin/MatchEntryForm";
 import { Button } from "@/components/ui/button";
 import { Championship, Match, User } from "@/lib/definitions";
 import { ArrowLeft } from "lucide-react";
 import Link from 'next/link';
 
-export default function EditMatchPage() {
+export default function EditMatchPage({ params }: { params: { id: string; matchId: string } }) {
     
     const mockChampionships: Championship[] = [
         { id: 'Summer Season 2024', name: 'Summer Season 2024' },
@@ -30,7 +31,7 @@ export default function EditMatchPage() {
         <div className="space-y-6">
             <div className="flex items-center gap-4">
                  <Button variant="outline" size="icon" asChild>
-                    <Link href={`/admin/seasons/Summer%20Season%202024`}>
+                    <Link href={`/admin/seasons/${params.id}`}>
                         <ArrowLeft />
                     </Link>
                 </Button>
