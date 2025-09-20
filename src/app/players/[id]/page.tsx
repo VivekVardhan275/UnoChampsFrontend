@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { notFound, useParams, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -51,15 +52,19 @@ const LoadingSkeleton = () => (
     </div>
 )
 
+type PlayerPageData = {
+    player: User;
+    matches: Match[];
+    users: User[];
+}
+
 export default function PlayerProfilePage() {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const seasonId = searchParams.get('season');
   const { token, isLoading: isAuthLoading } = useAuth();
   
-  const [player, setPlayer] = useState<User | null>(null);
-  const [playerStanding, setPlayerStanding] = useState<Standing | null>(null);
-  const [playerMatches, setPlayerMatches] = useState<Match[]>([]);
+  const [data, setData] = useState<PlayerPageData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -73,7 +78,6 @@ export default function PlayerProfilePage() {
           notFound();
           return;
         }
-        setPlayer(fetchedPlayer);
 
         let matches: Match[] = [];
         let users: User[] = [];
@@ -83,17 +87,12 @@ export default function PlayerProfilePage() {
             matches = seasonData.matches;
             users = seasonData.users;
         } else {
+            // Fallback for all-time stats if needed
             matches = await getMatches();
             users = await getUsers();
         }
-
-        const filteredMatches = matches.filter(m => m.participants.some(p => p.userId === fetchedPlayer.id));
-        setPlayerMatches(filteredMatches);
         
-        const standings = calculateStandings(matches, users);
-        const standing = standings.find(s => s.player.id === fetchedPlayer.id);
-        setPlayerStanding(standing || null);
-
+        setData({ player: fetchedPlayer, matches, users });
       } catch (error) {
         console.error("Failed to fetch player data:", error);
       } finally {
@@ -105,9 +104,28 @@ export default function PlayerProfilePage() {
 
   }, [params.id, seasonId, token, isAuthLoading]);
 
-  if (isLoading || isAuthLoading || !player) {
+  const { playerStanding, playerMatches } = useMemo(() => {
+    if (!data) return { playerStanding: null, playerMatches: [] };
+    
+    const { player, matches, users } = data;
+
+    const filteredMatches = matches.filter(m => m.participants.some(p => p.userId === player.id));
+    const standings = calculateStandings(matches, users);
+    const standing = standings.find(s => s.player.id === player.id);
+    
+    return {
+      playerStanding: standing || null,
+      playerMatches: filteredMatches,
+    };
+  }, [data]);
+
+
+  if (isLoading || isAuthLoading || !data) {
     return <LoadingSkeleton />;
   }
+  
+  const { player } = data;
+
 
   return (
     <div className="space-y-8">

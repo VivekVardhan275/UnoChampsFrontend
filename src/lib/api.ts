@@ -101,6 +101,9 @@ export async function getMatchesByChampionshipId(championshipId: string, token?:
 
         const apiGames: ApiGame[] = response.data;
         
+        const userPromises = apiGames.flatMap(game => game.members.map(findOrCreateUserByName));
+        await Promise.all(userPromises);
+        
         const transformedMatches: Match[] = await Promise.all(apiGames.map(async (game) => {
             
             const memberStats = game.members.map((member, index) => ({
@@ -138,8 +141,7 @@ export async function getMatchesByChampionshipId(championshipId: string, token?:
         const otherMatches = matches.filter(m => m.championshipId !== championshipId);
         matches = [...otherMatches, ...transformedMatches];
         
-        const allUsers = await getUsers();
-        return { matches: transformedMatches, users: allUsers };
+        return { matches: transformedMatches, users: users };
     } catch (error) {
         console.error('Failed to fetch games for season:', error);
         return { matches: [], users: [] };
