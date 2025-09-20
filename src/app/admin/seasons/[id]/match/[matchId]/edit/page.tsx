@@ -1,5 +1,5 @@
 import MatchEntryForm from "@/components/admin/MatchEntryForm";
-import { getChampionshipById, getChampionships, getMatchById } from "@/lib/data";
+import { getChampionships, getMatchById } from "@/lib/api";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import Link from 'next/link';

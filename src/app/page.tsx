@@ -1,4 +1,4 @@
-import { getMatches, getUsers, getChampionships } from '@/lib/data';
+import { getMatches, getUsers, getChampionships } from '@/lib/api';
 import { calculateStandings } from '@/lib/utils';
 import { getUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
@@ -10,9 +10,11 @@ export default async function Home() {
     redirect('/login');
   }
 
-  const users = await getUsers();
-  const matches = await getMatches();
-  const championships = await getChampionships();
+  const [users, matches, championships] = await Promise.all([
+    getUsers(),
+    getMatches(),
+    getChampionships(),
+  ]);
   
   const standings = calculateStandings(matches, users);
 

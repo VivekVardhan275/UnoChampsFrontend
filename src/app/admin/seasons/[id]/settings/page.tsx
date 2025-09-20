@@ -1,5 +1,5 @@
 import SeasonForm from "@/components/admin/SeasonForm";
-import { getChampionshipById } from "@/lib/data";
+import { getChampionshipById } from "@/lib/api";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import Link from 'next/link';

@@ -1,10 +1,9 @@
-import { getUserById, getMatchesByUserId } from '@/lib/data';
+import { getUserById, getMatchesByUserId, getMatches, getUsers } from '@/lib/api';
 import { notFound } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { calculateStandings } from '@/lib/utils';
-import { getMatches, getUsers } from '@/lib/data';
 import { Trophy, Medal, Swords, Hash, Star } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -27,8 +26,11 @@ export default async function PlayerProfilePage({ params }: { params: { id: stri
     notFound();
   }
 
-  const allUsers = await getUsers();
-  const allMatches = await getMatches();
+  const [allUsers, allMatches] = await Promise.all([
+      getUsers(),
+      getMatches()
+  ]);
+
   const standings = calculateStandings(allMatches, allUsers);
   const playerStanding = standings.find(s => s.player.id === player.id);
 

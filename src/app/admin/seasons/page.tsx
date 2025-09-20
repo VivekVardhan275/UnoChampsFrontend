@@ -1,4 +1,4 @@
-import { getChampionships } from "@/lib/data";
+import { getChampionships } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import SeasonForm from "@/components/admin/SeasonForm";
 import SeasonsList from "@/components/admin/SeasonsList";

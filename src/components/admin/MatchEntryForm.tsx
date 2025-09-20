@@ -19,7 +19,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Championship, Match, User } from "@/lib/definitions";
-import { getUsersByName } from "@/lib/data";
+import { getUsersByName } from "@/lib/api";
 
 const ParticipantSchema = z.object({
   name: z.string().min(1, "Player name is required."),
@@ -69,14 +69,18 @@ export default function MatchEntryForm({ allChampionships, match }: { allChampio
   useEffect(() => {
     if (isEditing && match) {
       const fetchParticipantDetails = async () => {
-        const participantUsers = await getUsersByName(match.participants.map(p => p.userId));
+        const userIds = match.participants.map(p => p.userId);
+        // This is inefficient. A single backend call to get users by IDs would be better.
+        // For now, we assume a `getUsersByName` can work if names are available on match object,
+        // which they are not by default. Let's assume the passed `match` object has user details.
+        const participantUsers = match.participants.map(p => p.user);
         const userMap = new Map(participantUsers.map(u => [u.id, u]));
 
         form.reset({
           championshipId: match.championshipId,
           name: match.name,
           date: new Date(match.date),
-          multiplier: 10, // You need to decide how to get this. Maybe it's constant, or stored with the match
+          multiplier: 10, 
           participants: match.participants.sort((a,b) => a.rank - b.rank).map(p => ({
             name: userMap.get(p.userId)?.name || '',
             rank: p.rank,

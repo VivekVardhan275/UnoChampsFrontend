@@ -1,4 +1,4 @@
-import { getChampionshipById, getMatchesByChampionshipId, getUsers } from "@/lib/data";
+import { getChampionshipById, getMatchesByChampionshipId, getUsers } from "@/lib/api";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import Link from 'next/link';
@@ -12,8 +12,10 @@ export default async function SeasonDetailsPage({ params }: { params: { id: stri
         notFound();
     }
     
-    const matches = await getMatchesByChampionshipId(params.id);
-    const users = await getUsers();
+    const [matches, users] = await Promise.all([
+      getMatchesByChampionshipId(params.id),
+      getUsers()
+    ]);
     
     return (
         <div className="space-y-6">

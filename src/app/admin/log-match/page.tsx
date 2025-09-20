@@ -1,5 +1,5 @@
 import MatchEntryForm from "@/components/admin/MatchEntryForm";
-import { getChampionships } from "@/lib/data";
+import { getChampionships } from "@/lib/api";
 
 export default async function LogMatchPage() {
     const championships = await getChampionships();

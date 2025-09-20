@@ -19,15 +19,16 @@ function LoginButton() {
   );
 }
 
-export default function LoginForm() {
+export default function LoginForm({ role }: { role: 'ADMIN' | 'PLAYER' }) {
   const [state, dispatch] = useActionState(login, undefined);
 
   return (
     <form action={dispatch} className="space-y-4">
+        <input type="hidden" name="role" value={role} />
         <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor={`email-${role}`}>Email</Label>
         <Input
-            id="email"
+            id={`email-${role}`}
             name="email"
             type="email"
             placeholder="m@example.com"
@@ -38,8 +39,8 @@ export default function LoginForm() {
         )}
         </div>
         <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input id="password" name="password" type="password" required />
+        <Label htmlFor={`password-${role}`}>Password</Label>
+        <Input id={`password-${role}`} name="password" type="password" required />
         {state?.errors?.password && (
             <p className="text-sm font-medium text-destructive">{state.errors.password}</p>
         )}

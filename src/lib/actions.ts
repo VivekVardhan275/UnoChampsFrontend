@@ -5,9 +5,16 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
-import { getUserByEmail, addUser, addMatch, addChampionship, deleteChampionship as deleteChampionshipFromDb, updateChampionship as updateChampionshipInDb, getChampionships, deleteMatch as deleteMatchFromDb, findOrCreateUserByName, updateMatch as updateMatchInDb } from './data';
 import { sessionCookieName } from './auth';
-import type { MatchParticipant, User } from './definitions';
+import { 
+    addMatch as addMatchToApi, 
+    addChampionship as addChampionshipToApi,
+    deleteChampionship as deleteChampionshipFromApi,
+    updateChampionship as updateChampionshipInApi,
+    deleteMatch as deleteMatchFromApi,
+    findOrCreateUserByName,
+    updateMatch as updateMatchInApi,
+} from './api';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -15,47 +22,56 @@ const loginSchema = z.object({
 });
 
 export async function login(prevState: any, formData: FormData) {
-  const validatedFields = loginSchema.safeParse(
-    Object.fromEntries(formData.entries())
-  );
+    const validatedFields = loginSchema.safeParse(
+        Object.fromEntries(formData.entries())
+    );
 
-  let user: User | undefined;
-
-  if (!validatedFields.success) {
-    return {
-      errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Invalid fields. Failed to login.',
-    };
-  }
-
-  const { email, password } = validatedFields.data;
-
-  try {
-    user = await getUserByEmail(email);
-
-    if (!user || user.password !== password) {
-      return { message: 'Invalid email or password.' };
+    if (!validatedFields.success) {
+        return {
+        errors: validatedFields.error.flatten().fieldErrors,
+        message: 'Invalid fields. Failed to login.',
+        };
     }
-    
-    const session = { userId: user.id };
-    cookies().set(sessionCookieName, JSON.stringify(session), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 7, // 1 week
-      path: '/',
+
+    const { email, password } = validatedFields.data;
+    const role = formData.get('role') === 'ADMIN' ? 'admin' : 'player';
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/login/${role}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
     });
 
-  } catch (error) {
-    return { message: 'Database Error: Failed to login.' };
-  }
+    const data = await response.json();
 
-  revalidatePath('/');
-  
-  if (user?.role === 'ADMIN') {
-    redirect('/admin');
-  } else {
-    redirect('/');
-  }
+    if (!data.success) {
+        return { message: data.message || 'Invalid credentials.' };
+    }
+
+    const session = {
+        userId: data.username, // Assuming username is the unique ID from your API
+        token: data.token,
+        user: {
+            name: data.username,
+            email: data.email,
+            role: data.typeOfUser,
+        }
+    };
+
+    cookies().set(sessionCookieName, JSON.stringify(session), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24 * 7, // 1 week
+        path: '/',
+    });
+
+    revalidatePath('/');
+    
+    if (data.typeOfUser === 'ADMIN') {
+        redirect('/admin');
+    } else {
+        redirect('/');
+    }
 }
 
 export async function logout() {
@@ -72,41 +88,49 @@ const registerSchema = z.object({
 
 
 export async function register(prevState: any, formData: FormData) {
-  const validatedFields = registerSchema.safeParse(
-    Object.fromEntries(formData.entries())
-  );
+    const validatedFields = registerSchema.safeParse(
+        Object.fromEntries(formData.entries())
+    );
     
-  if (!validatedFields.success) {
-    return {
-      errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Invalid fields. Failed to register.',
-    };
-  }
-
-  const { name, email, password } = validatedFields.data;
-
-  try {
-    const existingUser = await getUserByEmail(email);
-    if(existingUser) {
-        return { message: 'An account with this email already exists.' };
+    if (!validatedFields.success) {
+        return {
+        errors: validatedFields.error.flatten().fieldErrors,
+        message: 'Invalid fields. Failed to register.',
+        };
     }
 
-    const newUser = await addUser({ name, email, password });
+    const { name, email, password } = validatedFields.data;
     
-    const session = { userId: newUser.id };
-    cookies().set(sessionCookieName, JSON.stringify(session), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/',
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/register/player`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: name, email, password }),
     });
 
-  } catch (error) {
-    return { message: 'Database Error: Failed to register.' };
-  }
+    const data = await response.json();
 
-  revalidatePath('/');
-  redirect('/');
+    if (!data.success) {
+        return { message: data.message || 'Failed to register.' };
+    }
+    
+    const session = {
+        userId: data.username,
+        token: data.token,
+        user: {
+            name: data.username,
+            email: data.email,
+            role: data.typeOfUser,
+        }
+    };
+    cookies().set(sessionCookieName, JSON.stringify(session), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24 * 7,
+        path: '/',
+    });
+
+    revalidatePath('/');
+    redirect('/');
 }
 
 const matchSchema = z.object({
@@ -151,7 +175,7 @@ export async function logMatch(data: z.infer<typeof matchSchema>) {
 
         const participantsWithUserIds = await Promise.all(participantPromises);
 
-        await addMatch({
+        await addMatchToApi({
             championshipId: validatedData.data.championshipId,
             name: validatedData.data.name,
             date: validatedData.data.date.toISOString(),
@@ -185,7 +209,7 @@ export async function updateMatch(matchId: string, data: z.infer<typeof matchSch
 
         const participantsWithUserIds = await Promise.all(participantPromises);
 
-        await updateMatchInDb(matchId, {
+        await updateMatchInApi(matchId, {
             championshipId: validatedData.data.championshipId,
             name: validatedData.data.name,
             date: validatedData.data.date.toISOString(),
@@ -219,7 +243,7 @@ export async function createSeason(prevState: any, formData: FormData) {
     }
 
     try {
-        await addChampionship(validatedFields.data.name);
+        await addChampionshipToApi(validatedFields.data.name);
     } catch (error) {
         return { message: 'Database Error: Failed to create season.' };
     }
@@ -240,7 +264,7 @@ export async function updateSeason(id: string, prevState: any, formData: FormDat
     }
 
     try {
-        await updateChampionshipInDb(id, validatedFields.data.name);
+        await updateChampionshipInApi(id, validatedFields.data.name);
     } catch (error) {
         return { message: `Database Error: ${(error as Error).message}` };
     }
@@ -252,7 +276,7 @@ export async function updateSeason(id: string, prevState: any, formData: FormDat
 
 export async function deleteSeason(id: string) {
     try {
-        await deleteChampionshipFromDb(id);
+        await deleteChampionshipFromApi(id);
         revalidatePath('/admin/seasons');
         return { message: 'Season deleted successfully.' };
     } catch (error) {
@@ -262,7 +286,7 @@ export async function deleteSeason(id: string) {
 
 export async function deleteMatch(id: string, seasonId: string) {
     try {
-        await deleteMatchFromDb(id);
+        await deleteMatchFromApi(id);
         revalidatePath(`/admin/seasons/${seasonId}`);
         revalidatePath('/');
         return { message: 'Game deleted successfully.' };

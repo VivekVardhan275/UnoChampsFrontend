@@ -1,10 +1,12 @@
-import { getMatches, getUsers, getChampionships } from '@/lib/data';
+import { getMatches, getUsers, getChampionships } from '@/lib/api';
 import StandingsSelector from '@/components/standings/StandingsSelector';
 
 export default async function AdminStandingsPage() {
-  const users = await getUsers();
-  const matches = await getMatches();
-  const championships = await getChampionships();
+  const [users, matches, championships] = await Promise.all([
+    getUsers(),
+    getMatches(),
+    getChampionships(),
+  ]);
 
   return (
     <div className="space-y-8">
