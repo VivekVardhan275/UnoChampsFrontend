@@ -44,18 +44,18 @@ export default function SeasonsList({ seasons }: { seasons: Championship[] }) {
         <div className="space-y-2">
             {seasons.sort((a, b) => b.name.localeCompare(a.name)).map(season => (
                 <div key={season.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted">
-                    <Link href={`/admin/seasons/${season.id}`} className="font-medium hover:underline flex-grow">
+                    <Link href={`/admin/seasons/${encodeURIComponent(season.id)}`} className="font-medium hover:underline flex-grow">
                         {season.name}
                     </Link>
                     <div className="flex items-center gap-2">
                         <Button variant="ghost" size="icon" asChild>
-                            <Link href={`/admin/seasons/${season.id}`}>
+                            <Link href={`/admin/seasons/${encodeURIComponent(season.id)}`}>
                                 <Pen className="h-4 w-4" />
                                 <span className="sr-only">Manage Matches</span>
                             </Link>
                         </Button>
                         <Button variant="ghost" size="icon" asChild>
-                            <Link href={`/admin/seasons/${season.id}/settings`}>
+                            <Link href={`/admin/seasons/${encodeURIComponent(season.id)}/settings`}>
                                 <Settings className="h-4 w-4" />
                                 <span className="sr-only">Season Settings</span>
                             </Link>
