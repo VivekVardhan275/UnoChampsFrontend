@@ -6,21 +6,56 @@ import type { Championship, Match, User, MatchToCreate } from './definitions';
 let users: User[] = [
     { id: '1', name: 'Alice', email: 'alice@example.com', role: 'PLAYER', avatarUrl: 'https://picsum.photos/seed/Alice/200/200' },
     { id: '2', name: 'Bob', email: 'bob@example.com', role: 'PLAYER', avatarUrl: 'https://picsum.photos/seed/Bob/200/200' },
-    { id: '3', name: 'Charlie', email: 'charlie@example.com', role_of_user: 'PLAYER', avatarUrl: 'https://picsum.photos/seed/Charlie/200/200' },
+    { id: '3', name: 'Charlie', email: 'charlie@example.com', role: 'PLAYER', avatarUrl: 'https://picsum.photos/seed/Charlie/200/200' },
     { id: '99', name: 'Admin', email: 'admin@unostat.com', role: 'ADMIN', avatarUrl: 'https://picsum.photos/seed/Admin/200/200' },
 ];
-let matches: Match[] = [];
 let championships: Championship[] = [
     { id: '1', name: 'Season 1'},
     { id: '2', name: '2024 Championship'},
 ];
-let nextUserId = 4;
-let nextMatchId = 1;
+let matches: Match[] = [
+    {
+        id: '101',
+        name: 'Game 1',
+        championshipId: '1',
+        date: new Date('2024-05-10').toISOString(),
+        participants: [
+            { userId: '1', rank: 1, points: 20 },
+            { userId: '2', rank: 2, points: 10 },
+            { userId: '3', rank: 3, points: 0 },
+        ]
+    },
+    {
+        id: '102',
+        name: 'Game 2',
+        championshipId: '1',
+        date: new Date('2024-05-12').toISOString(),
+        participants: [
+            { userId: '3', rank: 1, points: 20 },
+            { userId: '1', rank: 2, points: 10 },
+            { userId: '2', rank: 3, points: 0 },
+        ]
+    },
+    {
+        id: '103',
+        name: 'Tournament Opener',
+        championshipId: '2',
+        date: new Date('2024-06-01').toISOString(),
+        participants: [
+            { userId: '2', rank: 1, points: 10 },
+            { userId: '1', rank: 2, points: 0 },
+        ]
+    }
+];
+
+let nextUserId = 100;
+let nextMatchId = 104;
 let nextChampionshipId = 3;
 
 
 export async function getUsers(): Promise<User[]> {
-  return Promise.resolve(users);
+  // In a real app, you'd fetch this from your backend
+  return Promise.resolve(users.filter(u => u.role === 'PLAYER'));
 }
 
 export async function getUserById(id: string): Promise<User | undefined> {
@@ -32,7 +67,18 @@ export async function getMatches(): Promise<Match[]> {
 }
 
 export async function getMatchById(id: string): Promise<Match | undefined> {
-    return Promise.resolve(matches.find(m => m.id === id));
+    const match = matches.find(m => m.id === id);
+    if (!match) return undefined;
+    
+    const participantUsers = await Promise.all(match.participants.map(p => getUserById(p.userId)));
+    
+    return Promise.resolve({
+        ...match,
+        participants: match.participants.map((p, i) => ({
+            ...p,
+            user: participantUsers[i]!
+        }))
+    });
 }
 
 export async function getMatchesByUserId(userId: string): Promise<Match[]> {
@@ -40,7 +86,17 @@ export async function getMatchesByUserId(userId: string): Promise<Match[]> {
 }
 
 export async function getMatchesByChampionshipId(championshipId: string): Promise<Match[]> {
-    return Promise.resolve(matches.filter(m => m.championshipId === championshipId));
+    const championshipMatches = matches.filter(m => m.championshipId === championshipId);
+
+    const matchesWithUsers = await Promise.all(championshipMatches.map(async (match) => {
+        const participantsWithUsers = await Promise.all(match.participants.map(async (p) => {
+            const user = await getUserById(p.userId);
+            return { ...p, user: user! };
+        }));
+        return { ...match, participants: participantsWithUsers };
+    }));
+
+    return Promise.resolve(matchesWithUsers);
 }
 
 export async function getChampionships(): Promise<Championship[]> {
