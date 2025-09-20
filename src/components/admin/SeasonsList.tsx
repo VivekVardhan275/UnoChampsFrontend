@@ -70,8 +70,7 @@ export default function SeasonsList({ seasons }: { seasons: Championship[] }) {
                                 <AlertDialogHeader>
                                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the season.
-                                    You cannot delete a season if it has matches associated with it.
+                                    This action cannot be undone. This will permanently delete the season and corresponding games played in that particular season
                                 </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
