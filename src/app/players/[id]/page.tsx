@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -117,7 +118,6 @@ export default function PlayerProfilePage() {
         </Avatar>
         <div>
           <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">{player.name}</h1>
-          <p className="mt-2 text-lg text-muted-foreground">{player.email}</p>
           {seasonId && <p className="mt-1 text-md font-semibold text-primary">Stats for: {decodeURIComponent(seasonId)}</p>}
         </div>
       </div>
