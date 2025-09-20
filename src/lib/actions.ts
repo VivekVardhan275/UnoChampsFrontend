@@ -1,11 +1,8 @@
 'use server';
 
 import { z } from 'zod';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
-import { sessionCookieName } from './auth';
 import { 
     addMatch as addMatchToApi, 
     addChampionship as addChampionshipToApi,
@@ -16,122 +13,6 @@ import {
     updateMatch as updateMatchInApi,
 } from './api';
 
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1, 'Password is required'),
-});
-
-export async function login(prevState: any, formData: FormData) {
-    const validatedFields = loginSchema.safeParse(
-        Object.fromEntries(formData.entries())
-    );
-
-    if (!validatedFields.success) {
-        return {
-        errors: validatedFields.error.flatten().fieldErrors,
-        message: 'Invalid fields. Failed to login.',
-        };
-    }
-
-    const { email, password } = validatedFields.data;
-    const role = formData.get('role') === 'ADMIN' ? 'admin' : 'player';
-
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/login/${role}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-    });
-
-    const data = await response.json();
-
-    if (!data.success) {
-        return { message: data.message || 'Invalid credentials.' };
-    }
-
-    const session = {
-        userId: data.username, // Assuming username is the unique ID from your API
-        token: data.token,
-        user: {
-            name: data.username,
-            email: data.email,
-            role: data.typeOfUser,
-        }
-    };
-
-    cookies().set(sessionCookieName, JSON.stringify(session), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24 * 7, // 1 week
-        path: '/',
-    });
-
-    revalidatePath('/');
-    
-    if (data.typeOfUser === 'ADMIN') {
-        redirect('/admin');
-    } else {
-        redirect('/');
-    }
-}
-
-export async function logout() {
-  cookies().delete(sessionCookieName);
-  revalidatePath('/');
-  redirect('/login');
-}
-
-const registerSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(6),
-});
-
-
-export async function register(prevState: any, formData: FormData) {
-    const validatedFields = registerSchema.safeParse(
-        Object.fromEntries(formData.entries())
-    );
-    
-    if (!validatedFields.success) {
-        return {
-        errors: validatedFields.error.flatten().fieldErrors,
-        message: 'Invalid fields. Failed to register.',
-        };
-    }
-
-    const { name, email, password } = validatedFields.data;
-    
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/register/player`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: name, email, password }),
-    });
-
-    const data = await response.json();
-
-    if (!data.success) {
-        return { message: data.message || 'Failed to register.' };
-    }
-    
-    const session = {
-        userId: data.username,
-        token: data.token,
-        user: {
-            name: data.username,
-            email: data.email,
-            role: data.typeOfUser,
-        }
-    };
-    cookies().set(sessionCookieName, JSON.stringify(session), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24 * 7,
-        path: '/',
-    });
-
-    revalidatePath('/');
-    redirect('/');
-}
 
 const matchSchema = z.object({
     championshipId: z.string().min(1, 'Season is required.'),
@@ -188,7 +69,6 @@ export async function logMatch(data: z.infer<typeof matchSchema>) {
     revalidatePath('/admin/log-match');
     revalidatePath(`/admin/seasons/${data.championshipId}`);
     revalidatePath('/');
-    redirect(`/admin/seasons/${data.championshipId}`);
 }
 
 export async function updateMatch(matchId: string, data: z.infer<typeof matchSchema>) {
@@ -222,7 +102,6 @@ export async function updateMatch(matchId: string, data: z.infer<typeof matchSch
     revalidatePath(`/admin/seasons/${data.championshipId}`);
     revalidatePath(`/admin/seasons/${data.championshipId}/match/${matchId}/edit`);
     revalidatePath('/');
-    redirect(`/admin/seasons/${data.championshipId}`);
 }
 
 
@@ -271,7 +150,6 @@ export async function updateSeason(id: string, prevState: any, formData: FormDat
     revalidatePath('/admin/seasons');
     revalidatePath(`/admin/seasons/${id}`);
     revalidatePath(`/admin/seasons/${id}/settings`);
-    redirect(`/admin/seasons/${id}`);
 }
 
 export async function deleteSeason(id: string) {

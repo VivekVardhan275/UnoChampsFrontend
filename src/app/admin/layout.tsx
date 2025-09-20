@@ -1,19 +1,32 @@
-import { getUser } from '@/lib/auth';
+'use client';
+import { useAuth } from '@/contexts/AuthContext';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Home, ListPlus, Shield, SlidersHorizontal, Swords } from 'lucide-react';
+import { Home, ListPlus, Shield, SlidersHorizontal, Swords, Loader2 } from 'lucide-react';
+import { useEffect } from 'react';
 
-export default async function AdminLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getUser();
+  const { user, isLoading } = useAuth();
 
-  if (!user || user.role !== 'ADMIN') {
-    redirect('/');
+  useEffect(() => {
+    if (!isLoading && (!user || user.role !== 'ADMIN')) {
+      redirect('/');
+    }
+  }, [user, isLoading]);
+
+  if (isLoading || !user) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
+
 
   return (
     <div className="flex flex-col gap-8">

@@ -1,15 +1,28 @@
-import { getUser } from '@/lib/auth';
+'use client';
+
+import { useAuth } from '@/contexts/AuthContext';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { PenSquare } from 'lucide-react';
+import { PenSquare, Loader2 } from 'lucide-react';
+import { useEffect } from 'react';
 
-export default async function ProfilePage() {
-  const user = await getUser();
+export default function ProfilePage() {
+  const { user, isLoading } = useAuth();
 
-  if (!user) {
-    redirect('/login');
+  useEffect(() => {
+    if (!isLoading && !user) {
+      redirect('/login');
+    }
+  }, [user, isLoading]);
+
+  if (isLoading || !user) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (

@@ -1,6 +1,7 @@
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { getUser } from '@/lib/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -10,9 +11,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { logout } from '@/lib/actions';
 import { Shield, User as UserIcon, LogOut, LogIn, UserPlus } from 'lucide-react';
 import { ThemeToggle } from '../ThemeToggle';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Logo = () => (
   <Link href="/" className="flex items-center gap-2 text-xl font-bold">
@@ -23,7 +24,9 @@ const Logo = () => (
   </Link>
 );
 
-const UserNav = ({ user }: { user: Awaited<ReturnType<typeof getUser>> }) => {
+const UserNav = () => {
+  const { user, logout } = useAuth();
+  
   if (!user) {
     return (
       <div className="flex items-center gap-2">
@@ -78,29 +81,25 @@ const UserNav = ({ user }: { user: Awaited<ReturnType<typeof getUser>> }) => {
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
-        <form action={logout}>
-          <DropdownMenuItem asChild>
-            <button type="submit" className="w-full">
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Log out</span>
-            </button>
-          </DropdownMenuItem>
-        </form>
+        <DropdownMenuItem asChild>
+          <button onClick={logout} className="w-full">
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Log out</span>
+          </button>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 };
 
-export default async function Header() {
-  const user = await getUser();
-
+export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center justify-between">
         <Logo />
         <div className="flex items-center">
           <ThemeToggle />
-          <UserNav user={user} />
+          <UserNav />
         </div>
       </div>
     </header>

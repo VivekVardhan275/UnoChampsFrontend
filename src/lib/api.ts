@@ -1,37 +1,50 @@
 'use server';
 
 import type { Championship, Match, User, MatchToCreate } from './definitions';
-import { cookies } from 'next/headers';
+import { getSession } from './auth';
+import axios from 'axios';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-async function getAuthToken(): Promise<string | undefined> {
-    const cookieStore = cookies();
-    const sessionCookie = cookieStore.get('unostat_session');
-    if (sessionCookie) {
-        try {
-            const session = JSON.parse(sessionCookie.value);
-            return session.token;
-        } catch (error) {
-            console.error('Failed to parse session cookie:', error);
-            return undefined;
+const axiosInstance = axios.create({
+    baseURL: BASE_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
+axiosInstance.interceptors.request.use(
+    async (config) => {
+        // This is a server-side interceptor. It will only work in server components/actions
+        // For client-side requests, the token needs to be added there.
+        // We will adapt this once we see where it's called from.
+        const session = await getSession();
+        if (session?.token) {
+            config.headers.Authorization = `Bearer ${session.token}`;
         }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
     }
-    return undefined;
-}
+);
 
 
 async function fetcher(endpoint: string, options: RequestInit = {}): Promise<any> {
     const url = `${BASE_URL}${endpoint}`;
-    const token = await getAuthToken();
+    
+    // We are switching to client-side auth, so server-side token fetching needs adjustment.
+    // Let's rely on the components to provide the token for now where needed.
+    // For server components, this will become an issue if they need auth.
 
     const headers = {
         'Content-Type': 'application/json',
         ...options.headers,
     };
-
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+    
+    const session = await getSession(); // This will only work on the server
+    if (session?.token) {
+        headers['Authorization'] = `Bearer ${session.token}`;
     }
 
     try {
@@ -41,7 +54,6 @@ async function fetcher(endpoint: string, options: RequestInit = {}): Promise<any
             console.error(`API Error on ${endpoint}: ${response.status} ${response.statusText}`, errorBody);
             throw new Error(`Failed to fetch ${endpoint}: ${response.statusText}`);
         }
-        // Handle cases where response might be empty
         const text = await response.text();
         return text ? JSON.parse(text) : null;
 
@@ -120,26 +132,12 @@ export async function deleteChampionship(id: string): Promise<void> {
     return fetcher(`/api/championships/${id}`, { method: 'DELETE' });
 }
 
-// These functions from the old data.ts are related to user creation during match logging
-// and need a backend endpoint. Assuming a simple endpoint for finding/creating users.
-// We'll stub this for now and it would need to be implemented on the backend.
 export async function findOrCreateUserByName(name: string): Promise<User> {
-    // This function would ideally be a single API call to a dedicated endpoint
-    // For now, we simulate it, but this is not robust.
-    // A proper backend would handle the "find or create" logic atomically.
-    const users = await getUsers();
-    let user = users.find(u => u.name.toLowerCase() === name.toLowerCase());
-    if (user) {
-        return user;
-    }
-    // This part is problematic without a proper user creation endpoint that isn't registration
-    // Assuming a generic /api/users endpoint for creation for now.
     return fetcher('/api/users', { method: 'POST', body: JSON.stringify({ name }) });
 }
 
 export async function getUsersByName(names: string[]): Promise<User[]> {
-    // Assuming the backend can handle a query like this.
-    // e.g., /api/users?names=name1,name2
     const query = new URLSearchParams(names.map(n => ['name', n])).toString();
     return fetcher(`/api/users/by-names?${query}`);
 }
+

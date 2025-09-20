@@ -1,22 +1,61 @@
+'use client';
 import { getMatches, getUsers, getChampionships } from '@/lib/api';
 import { calculateStandings } from '@/lib/utils';
-import { getUser } from '@/lib/auth';
+import { useEffect, useState } from 'react';
 import { redirect } from 'next/navigation';
 import StandingsSelector from '@/components/standings/StandingsSelector';
+import { useAuth } from '@/contexts/AuthContext';
+import { Championship, Match, User } from '@/lib/definitions';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default async function Home() {
-  const user = await getUser();
-  if (!user) {
-    redirect('/login');
+export default function Home() {
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const [data, setData] = useState<{
+    users: User[];
+    matches: Match[];
+    championships: Championship[];
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isAuthLoading) {
+      if (!user) {
+        redirect('/login');
+      } else {
+        const fetchData = async () => {
+          try {
+            const [users, matches, championships] = await Promise.all([
+              getUsers(),
+              getMatches(),
+              getChampionships(),
+            ]);
+            setData({ users, matches, championships });
+          } catch (error) {
+            console.error("Failed to fetch page data", error);
+          } finally {
+            setIsLoading(false);
+          }
+        };
+        fetchData();
+      }
+    }
+  }, [user, isAuthLoading]);
+
+  if (isAuthLoading || isLoading || !data) {
+    return (
+        <div className="space-y-8">
+            <div className="text-center">
+                <Skeleton className="h-12 w-3/4 mx-auto mb-4" />
+                <Skeleton className="h-6 w-1/2 mx-auto" />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+                <Skeleton className="h-10 w-full sm:w-[280px]" />
+                <Skeleton className="h-10 w-full sm:w-[280px]" />
+            </div>
+            <Skeleton className="h-96 w-full" />
+        </div>
+    );
   }
-
-  const [users, matches, championships] = await Promise.all([
-    getUsers(),
-    getMatches(),
-    getChampionships(),
-  ]);
-  
-  const standings = calculateStandings(matches, users);
 
   return (
     <div className="space-y-8">
@@ -30,9 +69,9 @@ export default async function Home() {
       </div>
 
       <StandingsSelector
-        championships={championships}
-        matches={matches}
-        users={users}
+        championships={data.championships}
+        matches={data.matches}
+        users={data.users}
       />
     </div>
   );

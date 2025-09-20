@@ -1,16 +1,18 @@
 import 'server-only';
 import { cookies } from 'next/headers';
 import type { User } from './definitions';
-import { getUserById } from './api';
 
 export const sessionCookieName = 'unostat_session';
 
-type SessionData = {
+// This type now represents what we store in localStorage on the client.
+export type SessionData = {
     userId: string;
     token: string;
     user: User;
 }
 
+// This function will now only be used by server components that might need it,
+// but the primary source of truth for auth state will be client-side.
 export async function getSession(): Promise<SessionData | null> {
     const cookieStore = cookies();
     const sessionCookie = cookieStore.get(sessionCookieName);
@@ -25,12 +27,11 @@ export async function getSession(): Promise<SessionData | null> {
     }
 }
 
+// This function is for server components to get user info if needed.
 export async function getUser(): Promise<User | null> {
     const session = await getSession();
     if (!session?.user) {
         return null;
     }
-    // You might want to re-validate the user against the DB/API here
-    // For now, we trust the cookie's user object.
     return session.user;
 }
