@@ -21,7 +21,6 @@ import { Championship, Match, User } from "@/lib/definitions";
 import { getUsersByName, updateMatch as updateMatchInApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import { revalidatePath } from "next/cache";
 
 const ParticipantSchema = z.object({
   name: z.string().min(1, "Player name is required."),
