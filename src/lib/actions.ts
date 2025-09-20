@@ -2,9 +2,10 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
+import { format } from 'date-fns';
 
 import { 
-    addMatch as addMatchToApi, 
+    addMatchToApi, 
     addChampionship as addChampionshipToApi,
     deleteChampionship as deleteChampionshipFromApi,
     updateChampionship as updateChampionshipInApi,
@@ -12,6 +13,8 @@ import {
     updateMatch as updateMatchInApi,
     getUsers, // Assuming this stays as a mock/internal utility
 } from './api';
+import type { User } from './definitions';
+import { getSession } from './auth';
 
 
 // This function simulates finding a user or creating one if they don't exist.
@@ -61,30 +64,33 @@ const matchSchema = z.object({
 
 
 export async function logMatch(data: z.infer<typeof matchSchema>) {
+    const session = await getSession();
+    if (!session?.token) {
+        throw new Error('Authentication token not found.');
+    }
+
     const validatedData = matchSchema.safeParse(data);
     if (!validatedData.success) {
         throw new Error(validatedData.error.flatten().fieldErrors.participants?.[0] || 'Invalid match data.');
     }
     
     try {
-        const participantPromises = validatedData.data.participants.map(async (p) => {
-            const user = await findOrCreateUserByName(p.name);
-            return {
-                userId: user.id,
-                rank: p.rank,
-                points: p.points,
-            };
-        });
+        const { championshipId, name, date, participants } = validatedData.data;
 
-        const participantsWithUserIds = await Promise.all(participantPromises);
+        // The API expects arrays of strings for members, ranks, and points.
+        const apiPayload = {
+            gameName: `${name} ${format(date, 'dd/MM/yyyy')}`,
+            members: participants.map(p => p.name),
+            ranks: participants.map(p => p.rank.toString()),
+            points: participants.map(p => p.points.toString()),
+        };
 
-        await addMatchToApi({
-            championshipId: validatedData.data.championshipId,
-            name: validatedData.data.name,
-            date: validatedData.data.date.toISOString(),
-            participants: participantsWithUserIds,
-        });
+        await addMatchToApi(championshipId, apiPayload, session.token);
+
     } catch(error) {
+        if (error instanceof Error) {
+            throw new Error(`Database Error: Failed to log match. ${error.message}`);
+        }
         throw new Error('Database Error: Failed to log match.');
     }
     

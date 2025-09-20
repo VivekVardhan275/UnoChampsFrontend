@@ -1,7 +1,8 @@
 'use server';
 
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import type { Championship, Match, User, MatchToCreate } from './definitions';
+import { getSession } from './auth';
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
 
@@ -16,7 +17,6 @@ let championships: Championship[] = [];
 let matches: Match[] = [];
 
 let nextUserId = 100;
-let nextMatchId = 104;
 
 // This function simulates finding a user or creating one if they don't exist.
 // In a real backend, this would be a single API call. For now, it uses the mock user list.
@@ -137,14 +137,17 @@ export async function getMatchesByChampionshipId(championshipId: string, token: 
 }
 
 export async function getChampionships(token?: string | null): Promise<Championship[]> {
-    if (!token) {
+    const session = await getSession();
+    const authToken = token || session?.token;
+    
+    if (!authToken) {
         console.error("Authentication token is missing.");
         return [];
     }
 
     try {
         const response = await axios.get(`${backendUrl}/api/seasons/get-seasons`, {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${authToken}` },
         });
         const seasons: Championship[] = response.data.map((season: { seasonName: string }) => ({
             id: season.seasonName,
@@ -164,14 +167,30 @@ export async function getChampionshipById(id: string): Promise<Championship | un
     return Promise.resolve(championships.find(c => c.id === id));
 }
 
-export async function addMatch(match: MatchToCreate): Promise<Match> {
-    const newMatch: Match = {
-        ...match,
-        id: (nextMatchId++).toString(),
-    };
-    matches.push(newMatch);
-    return Promise.resolve(newMatch);
+type AddMatchPayload = {
+    gameName: string;
+    members: string[];
+    ranks: string[];
+    points: string[];
 }
+export async function addMatchToApi(season: string, payload: AddMatchPayload, token: string) {
+    try {
+        const response = await axios.post(
+            `${backendUrl}/api/season/games/set-game?season=${encodeURIComponent(season)}`,
+            payload,
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+        // The API returns the list of all games in the season.
+        // We might want to use this response to update our local cache of matches.
+        // For now, we'll just log success.
+        return response.data;
+    } catch (error) {
+        const axiosError = error as AxiosError;
+        console.error('Failed to add match:', axiosError.response?.data || axiosError.message);
+        throw new Error(`API Error: ${axiosError.response?.data || axiosError.message}`);
+    }
+}
+
 
 export async function updateMatch(id: string, data: Partial<MatchToCreate>): Promise<Match> {
     const matchIndex = matches.findIndex(m => m.id === id);
