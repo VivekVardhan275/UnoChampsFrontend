@@ -1,6 +1,6 @@
 'use client';
 
-import { getChampionshipById, getMatchesByChampionshipId, getUsers } from "@/lib/api";
+import { getChampionshipById, getMatchesByChampionshipId } from "@/lib/api";
 import { notFound, useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import Link from 'next/link';
@@ -15,28 +15,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function SeasonDetailsPage() {
     const params = useParams<{ id: string }>();
     const { token, isLoading: isAuthLoading } = useAuth();
-    const [season, setSeason] = useState<Championship | null>(null);
     const [matches, setMatches] = useState<Match[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const decodedId = params.id ? decodeURIComponent(params.id) : null;
+    const seasonName = decodedId; // The decoded ID is the season name
 
     useEffect(() => {
         if (!isAuthLoading && token && decodedId) {
             const fetchData = async () => {
                 try {
-                    const [seasonData, { matches: matchesData, users: usersData }] = await Promise.all([
-                        getChampionshipById(decodedId),
-                        getMatchesByChampionshipId(decodedId, token),
-                    ]);
+                    const { matches: matchesData, users: usersData } = await getMatchesByChampionshipId(decodedId, token);
                     
-                    if (!seasonData) {
-                        notFound();
-                        return;
-                    }
-                    
-                    setSeason(seasonData);
                     setMatches(matchesData);
                     setUsers(usersData);
                 } catch (error) {
@@ -51,7 +42,7 @@ export default function SeasonDetailsPage() {
         }
     }, [decodedId, token, isAuthLoading]);
 
-    if (isLoading || isAuthLoading || !season) {
+    if (isLoading || isAuthLoading) {
         return (
             <div className="space-y-6">
                  <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -80,6 +71,12 @@ export default function SeasonDetailsPage() {
         );
     }
     
+    if (!seasonName) {
+        // This can happen if the URL is malformed, so we can render a not found state
+        notFound();
+        return null;
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -90,12 +87,12 @@ export default function SeasonDetailsPage() {
                         </Link>
                     </Button>
                     <div>
-                        <h1 className="text-3xl font-bold">{season.name}</h1>
+                        <h1 className="text-3xl font-bold">{seasonName}</h1>
                         <p className="text-muted-foreground">Manage games played in this season.</p>
                     </div>
                 </div>
                 <Button asChild>
-                    <Link href={`/admin/seasons/${season.id}/settings`}>
+                    <Link href={`/admin/seasons/${decodedId}/settings`}>
                         <Settings className="mr-2 h-4 w-4" />
                         Season Settings
                     </Link>
@@ -104,7 +101,7 @@ export default function SeasonDetailsPage() {
             
             <Card>
                 <CardHeader>
-                    <CardTitle>Games in {season.name}</CardTitle>
+                    <CardTitle>Games in {seasonName}</CardTitle>
                     <CardDescription>
                         {matches.length > 0 
                             ? `Found ${matches.length} game${matches.length > 1 ? 's' : ''}.` 
@@ -113,7 +110,7 @@ export default function SeasonDetailsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                   <MatchList matches={matches} users={users} seasonId={season.id} />
+                   <MatchList matches={matches} users={users} seasonId={decodedId!} />
                 </CardContent>
             </Card>
         </div>
